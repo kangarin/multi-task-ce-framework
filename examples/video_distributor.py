@@ -5,10 +5,14 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
 
 from framework.service.distributor import Distributor
-from .video_task import VideoTask
 from framework.message_queue.mqtt import MqttSubscriber, MqttPublisher
 import json
 import re
+
+if __name__ == '__main__':
+    from video_task import VideoTask
+else:
+    from .video_task import VideoTask
 
 # use regex to match and substitude the topic, key for matching and value for substituting
 # for example, map 'generator_xxx' to 'aggregator_xxx'

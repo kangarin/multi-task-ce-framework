@@ -1,3 +1,5 @@
+### Starting a demo pipeline with independent python scripts
+
 `python3 examples/video_generator.py --id=1`
 `python3 examples/video_generator.py --id=2`
 
@@ -14,3 +16,8 @@
 
 `python3 examples/video_aggregator.py --id=1`
 `python3 examples/video_aggregator.py --id=2`
+
+### TODO:Starting a demo pipeline with one python script (unfinished)
+
+`python3 main.py`
+

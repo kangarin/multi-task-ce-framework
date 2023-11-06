@@ -4,9 +4,13 @@ print(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
 from framework.service.aggregator import Aggregator
-from .video_task import VideoTask
 from framework.message_queue.mqtt import MqttSubscriber, MqttPublisher
 import json
+
+if __name__ == '__main__':
+    from video_task import VideoTask
+else:
+    from .video_task import VideoTask
 
 class VideoAggregator(Aggregator):
     def __init__(self, id: str, incoming_mq_topic: str, tuned_parameters: dict = { 'window_size': 10 },

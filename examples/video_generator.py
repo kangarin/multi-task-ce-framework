@@ -6,11 +6,15 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
 from framework.service.generator import Generator
 import cv2
-from .video_task import VideoTask
 from framework.message_queue.mqtt import MqttPublisher
 import json
 import base64
 import time
+
+if __name__ == '__main__':
+    from video_task import VideoTask
+else:
+    from .video_task import VideoTask
 
 class VideoGenerator(Generator):
     def __init__(self, data_source, id, mq_topic, priority, tuned_parameters,
@@ -51,6 +55,7 @@ class VideoGenerator(Generator):
         self._tuned_parameters = tuned_parameters
 
     def send_task_to_mq(self, task: VideoTask):
+        print(len(json.dumps(task.serialize())))
         self.publisher.publish(self._mq_topic, json.dumps(task.serialize()))
 
     def run(self):
@@ -60,18 +65,56 @@ class VideoGenerator(Generator):
         #     yield random_num
         self.publisher.client.loop_start()
         id = 0
+        cnt = 0
+        
+        frames_per_task = self.get_tuned_parameters()['frames_per_task']
+        skipping_frame_interval = self.get_tuned_parameters()['skipping_frame_interval']
+        temp_frame_buffer = []
         while True:
-            # ret, frame = self._data_source.read()
-            # if not ret:
-            #     break
+
+            ret, frame = self._data_source.read()
+            if not ret:
+                break
+            cnt += 1
+            if cnt % skipping_frame_interval != 0:
+                continue
+            temp_frame_buffer.append(frame)
+            if len(temp_frame_buffer) < frames_per_task:
+                continue
+            else:
+                # compress all the frames in the buffer into a short video, send it as a task, and empty the buffer
+                compressed_video = self.compress_frames(temp_frame_buffer)
+                base64_frame = base64.b64encode(compressed_video).decode('utf-8')
+                task = VideoTask(base64_frame, id, self._id, self._priority, self.get_tuned_parameters())
+                self.send_task_to_mq(task)
+                id += 1
+                temp_frame_buffer = []
+                time.sleep(5)
+
+
             # base64_frame = base64.b64encode(frame).decode('utf-8')
             # task = VideoTask(base64_frame, id, self._id, self._priority)
-            import random
-            random_num = random.randint(0, 100)
-            task = VideoTask(random_num, id, self._id, self._priority)
-            self.send_task_to_mq(task)
-            id += 1
-            time.sleep(5)
+
+
+            # import random
+            # random_num = random.randint(0, 100)
+            # task = VideoTask(random_num, id, self._id, self._priority)
+            # self.send_task_to_mq(task)
+            # id += 1
+            # time.sleep(5)
+
+    def compress_frames(self, frames):
+        fourcc = cv2.VideoWriter_fourcc(*'mp4v')
+        height, width, _ = frames[0].shape
+        out = cv2.VideoWriter(f'temp_{self.get_id()}.mp4', fourcc, 30, (width, height))
+        for frame in frames:
+            out.write(frame)
+        out.release()
+        with open(f'temp_{self.get_id()}.mp4', 'rb') as f:
+            compressed_video = f.read()
+        # delete the temporary file
+        os.remove(f'temp_{self.get_id()}.mp4')
+        return compressed_video
 
 
 if __name__ == '__main__':
@@ -81,6 +124,6 @@ if __name__ == '__main__':
     parser.add_argument('--id', type=str, help='generator id')
     id = parser.parse_args().id
     generator = VideoGenerator(0, f'generator_{id}',
-                                'testapp/generator', 0, {})
+                                'testapp/generator', 0, {"frames_per_task": 5, "skipping_frame_interval": 5})
     generator.run()
 
