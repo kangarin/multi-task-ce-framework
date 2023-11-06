@@ -4,10 +4,11 @@ print(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
 from framework.service.processor import Processor
-from video_task import VideoTask
+from .video_task import VideoTask
 from framework.message_queue.mqtt import MqttSubscriber, MqttPublisher
 import json
 import logging
+import time
 
 class VideoProcessor2(Processor):
     def __init__(self, id: str, incoming_mq_topic: str, outgoing_mq_topic: str, 
@@ -15,7 +16,7 @@ class VideoProcessor2(Processor):
                  mqtt_host: str = 'localhost', mqtt_port: int = 1883, mqtt_username:str = 'admin', 
                  mqtt_password: str = 'admin'):
         super().__init__(id, incoming_mq_topic, outgoing_mq_topic, priority, tuned_parameters)
-        mqtt_client_id=id
+        mqtt_client_id=str(id)
         self.subscriber = MqttSubscriber(mqtt_host, mqtt_port, mqtt_username, mqtt_password, mqtt_client_id+"_subscriber")
         self.publisher = MqttPublisher(mqtt_host, mqtt_port, mqtt_username, mqtt_password, mqtt_client_id+"_publisher")
         self.local_task_queue = []
@@ -80,7 +81,6 @@ class VideoProcessor2(Processor):
 def process_frame(frame):
     # generate a random number for test
     import random
-    import time
     time.sleep(random.randint(1, 3))
     random_num = random.randint(0, 50)
     return random_num

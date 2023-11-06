@@ -5,7 +5,7 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
 
 from framework.service.distributor import Distributor
-from video_task import VideoTask
+from .video_task import VideoTask
 from framework.message_queue.mqtt import MqttSubscriber, MqttPublisher
 import json
 import re
@@ -20,7 +20,7 @@ class VideoDistributor(Distributor):
                  mqtt_username:str = 'admin', mqtt_password: str = 'admin',
                  topic_mapping_rules = {r'generator_(\w+)': r'testapp/aggregator_\1',}) -> None:
         super().__init__(id, incoming_mq_topic)
-        mqtt_client_id=id
+        mqtt_client_id=str(id)
         self.topic_mapping_rules = topic_mapping_rules
         self.subscriber = MqttSubscriber(mqtt_host, mqtt_port, mqtt_username, mqtt_password, mqtt_client_id+"_subscriber")
         self.publisher = MqttPublisher(mqtt_host, mqtt_port, mqtt_username, mqtt_password, mqtt_client_id+"_publisher")

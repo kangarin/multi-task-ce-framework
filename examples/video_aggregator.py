@@ -4,7 +4,7 @@ print(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
 from framework.service.aggregator import Aggregator
-from video_task import VideoTask
+from .video_task import VideoTask
 from framework.message_queue.mqtt import MqttSubscriber, MqttPublisher
 import json
 
@@ -13,7 +13,7 @@ class VideoAggregator(Aggregator):
                  mqtt_host: str = 'localhost', mqtt_port: int = 1883, mqtt_username:str = 'admin', 
                  mqtt_password: str = 'admin'):
         super().__init__(id, incoming_mq_topic, tuned_parameters)
-        mqtt_client_id=id
+        mqtt_client_id=str(id)
         self.subscriber = MqttSubscriber(mqtt_host, mqtt_port, mqtt_username, mqtt_password, mqtt_client_id+"_subscriber")
         self.local_task_queue = []
         self.result_window = []

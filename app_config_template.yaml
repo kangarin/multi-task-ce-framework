@@ -1,85 +1,100 @@
-app_config:
-  general:
-    mqtt_host: "localhost"
-    mqtt_port: 1883
-    mqtt_username: "mqtt_user"
-    mqtt_password: "mqtt_password"
-    mqtt_application_name: "car_detection_app"
+general:
+  mqtt_host: "localhost"
+  mqtt_port: 1883
+  mqtt_username: "mqtt_user"
+  mqtt_password: "mqtt_password"
+  mqtt_application_name: "car_detection_app"
 
-  services:
-    generators:
-      id_prefix: "generator"
-      outgoing_topic: "car_detection_generator"
+services:
+  generators:
+    id_prefix: "generator"
+    outgoing_topic: "testapp/generator"
+    instances:
+    - id: "1"
+      data_source: 0
+      priority: 1
+      tuned_parameters:
+        - name: "resolution"
+          value: 800
+        - name: "fps"
+          value: 10
+        - name: "encoding"
+          value: "h264"
+        - name: "frames_per_task"
+          value: 50
+    - id: "2"
+      data_source: 0
+      priority: 2
+      tuned_parameters:
+        - name: "resolution"
+          value: 800
+        - name: "fps"
+          value: 10
+        - name: "encoding"
+          value: "h264"
+        - name: "frames_per_task"
+          value: 50
+
+  processors:
+    - order: 1
+      id_prefix: "processor_stage_1"
+      incoming_topic: "$share/python/testapp/generator"
+      outgoing_topic: "testapp/processor_stage_1"
       instances:
-      - id: 1
-        data_source: "rtsp://localhost:8554/test1"
-        priority: 1
-        tuned_parameters:
-          - name: "resolution"
-            value: 800
-          - name: "fps"
-            value: 10
-          - name: "encoding"
-            value: "h264"
-          - name: "frames_per_task"
-            value: 50
-      - id: 2
-        data_source: "rtsp://localhost:8554/test2"
-        priority: 2
-        tuned_parameters:
-          - name: "resolution"
-            value: 800
-          - name: "fps"
-            value: 10
-          - name: "encoding"
-            value: "h264"
-          - name: "frames_per_task"
-            value: 50
+        - id: "1"
+          priority: 1
+          tuned_parameters:
+            - name: "model"
+              value: "yolov3"
+            - name: "confidence"
+              value: 0.5
+            - name: "threshold"
+              value: 0.3
+        - id: "2"
+          priority: 2
+          tuned_parameters:
+            - name: "model"
+              value: "yolov3"
+            - name: "confidence"
+              value: 0.5
+            - name: "threshold"
+              value: 0.3
 
-    processors:
-      - order: 1
-        id_prefix: "processor_stage_1"
-        incoming_topic: "car_detection_generator"
-        outgoing_topic: "car_detection_processor_1"
-        instances:
-          - id: 1
-            priority: 1
-            tuned_parameters:
-              - name: "model"
-                value: "yolov3"
-              - name: "confidence"
-                value: 0.5
-              - name: "threshold"
-                value: 0.3
-          - id: 2
-            priority: 2
-            tuned_parameters:
-              - name: "model"
-                value: "yolov3"
-              - name: "confidence"
-                value: 0.5
-              - name: "threshold"
-                value: 0.3
+    - order: 2
+      id_prefix: "processor_stage_2"
+      incoming_topic: "$share/python/testapp/processor_stage_1"
+      outgoing_topic: "testapp/processor_stage_2"
+      instances:
+        - id: "1"
+          priority: 1
+          tuned_parameters:
+            - name: "some_parameter"
+              value: "test"
+            - name: "some_parameter2"
+              value: 0.5
+        - id: "2"
+          priority: 2
+          tuned_parameters:
+            - name: "some_parameter"
+              value: "testagain"
+            - name: "some_parameter2"
+              value: 0.8
 
-      - order: 2
-        id_prefix: "processor_stage_2"
-        incoming_topic: "car_detection_processor_1"
-        outgoing_topic: "car_detection_processor_2"
-        instances:
-          - id: 1
-            priority: 1
-            tuned_parameters:
-              - name: "some_parameter"
-                value: "test"
-              - name: "some_parameter2"
-                value: 0.5
-          - id: 2
-            priority: 2
-            tuned_parameters:
-              - name: "some_parameter"
-                value: "testagain"
-              - name: "some_parameter2"
-                value: 0.8
+  distributors:
+    id_prefix: "distributor"
+    incoming_topic: "$share/python/testapp/processor_stage_2"
+    instances:
+      - id: "1"
+      - id: "2"
+
+  aggregators:
+    id_prefix: "aggregator"
+    instances:
+      - id: "1"
+        incoming_topic: "$share/python/testapp/aggregator_1"
+      - id: "2"
+        incoming_topic: "$share/python/testapp/aggregator_2"
+
 
 
 
