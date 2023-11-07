@@ -55,8 +55,8 @@ class VideoGenerator(Generator):
         self._tuned_parameters = tuned_parameters
 
     def send_task_to_mq(self, task: VideoTask):
-        print(len(json.dumps(task.serialize())))
-        self.publisher.publish(self._mq_topic, json.dumps(task.serialize()))
+        # print(len(json.dumps(task.serialize())))
+        self.publisher.publish(self._mq_topic, json.dumps(task.serialize()), qos=2)
 
     def run(self):
         # import random
@@ -87,6 +87,7 @@ class VideoGenerator(Generator):
                 base64_frame = base64.b64encode(compressed_video).decode('utf-8')
                 task = VideoTask(base64_frame, id, self._id, self._priority, self.get_tuned_parameters())
                 self.send_task_to_mq(task)
+                print(f"Generated task {task.get_seq_id()} from source {task.get_source_id()}")
                 id += 1
                 temp_frame_buffer = []
                 time.sleep(5)
@@ -123,7 +124,7 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Video generator')
     parser.add_argument('--id', type=str, help='generator id')
     id = parser.parse_args().id
-    generator = VideoGenerator(0, f'generator_{id}',
+    generator = VideoGenerator("/Users/wenyidai/GitHub/video-dag-manager/input/traffic-720p.mp4", f'generator_{id}',
                                 'testapp/generator', 0, {"frames_per_task": 5, "skipping_frame_interval": 5})
     generator.run()
 

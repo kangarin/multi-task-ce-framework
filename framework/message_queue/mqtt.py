@@ -12,8 +12,8 @@ class MqttPublisher:
         # self.client.username_pw_set(self.username, self.password)
         self.client.connect(self.host, self.port)
 
-    def publish(self, topic, payload):
-        self.client.publish(topic, payload)
+    def publish(self, topic, payload, qos):
+        self.client.publish(topic, payload, qos=qos)
 
     def disconnect(self):
         self.client.disconnect()
@@ -30,8 +30,8 @@ class MqttSubscriber:
         # self.client.username_pw_set(self.username, self.password)
         self.client.connect(self.host, self.port)
 
-    def subscribe(self, topic, callback):
-        self.client.subscribe(topic)
+    def subscribe(self, topic, callback, qos):
+        self.client.subscribe(topic, qos=qos)
         self.client.on_message = callback
 
     def disconnect(self):

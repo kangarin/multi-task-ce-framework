@@ -6,6 +6,7 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 from framework.service.aggregator import Aggregator
 from framework.message_queue.mqtt import MqttSubscriber, MqttPublisher
 import json
+import threading
 
 if __name__ == '__main__':
     from video_task import VideoTask
@@ -19,6 +20,8 @@ class VideoAggregator(Aggregator):
         super().__init__(id, incoming_mq_topic, tuned_parameters)
         mqtt_client_id=str(id)
         self.subscriber = MqttSubscriber(mqtt_host, mqtt_port, mqtt_username, mqtt_password, mqtt_client_id+"_subscriber")
+        # This will be accessed by different threads, so we need to use a lock
+        self.lock = threading.Lock()
         self.local_task_queue = []
         self.result_window = []
         self.window_size = tuned_parameters['window_size']
@@ -44,15 +47,20 @@ class VideoAggregator(Aggregator):
         self._tuned_parameters = tuned_parameters
 
     def get_task_from_incoming_mq(self) -> VideoTask:
-        return self.local_task_queue.pop(0)
+        with self.lock:
+            return self.local_task_queue.pop(0)
     
     def get_latest_results(self) -> list:
         return self.result_window
     
     def run(self):
         self.subscriber.subscribe(self._incoming_mq_topic, 
-                                  callback=(lambda client, userdata, message:
-                                           self.local_task_queue.append(VideoTask.deserialize(json.loads(message.payload.decode("utf-8"))))))
+                                  callback=(lambda client, userdata, message:(
+                                      self.lock.acquire(), 
+                                      self.local_task_queue.append(VideoTask.deserialize(json.loads(message.payload.decode()))), 
+                                      self.lock.release())),
+                                      qos=2                                     
+                                  )
         self.subscriber.client.loop_start()
 
         # for testing
@@ -78,7 +86,11 @@ class VideoAggregator(Aggregator):
         else:
             inserted = False
             for i in range(len(self.result_window)):
-                if seq_id < self.result_window[i][0]:
+                # if duplicated, discard
+                if seq_id == self.result_window[i][0]:
+                    inserted = True
+                    break
+                elif seq_id < self.result_window[i][0]:
                     self.result_window.insert(i, (seq_id, data))
                     inserted = True
                     break

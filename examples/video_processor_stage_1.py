@@ -11,6 +11,7 @@ import time
 import cv2
 import base64
 import numpy as np
+import threading 
 
 if __name__ == '__main__':
     from video_task import VideoTask
@@ -26,6 +27,8 @@ class VideoProcessor1(Processor):
         mqtt_client_id=str(id)
         self.subscriber = MqttSubscriber(mqtt_host, mqtt_port, mqtt_username, mqtt_password, mqtt_client_id+"_subscriber")
         self.publisher = MqttPublisher(mqtt_host, mqtt_port, mqtt_username, mqtt_password, mqtt_client_id+"_publisher")
+        # This will be accessed by different threads, so we need to use a lock
+        self.lock = threading.Lock()
         self.local_task_queue = []
 
     @classmethod
@@ -58,18 +61,20 @@ class VideoProcessor1(Processor):
         self._tuned_parameters = tuned_parameters
 
     def get_task_from_incoming_mq(self) -> VideoTask:
-        return self.local_task_queue.pop(0)
+        with self.lock:
+            return self.local_task_queue.pop(0)
 
     def send_task_to_outgoing_mq(self, task: VideoTask):
-        self.publisher.publish(self._outgoing_mq_topic, json.dumps(task.serialize()))
+        self.publisher.publish(self._outgoing_mq_topic, json.dumps(task.serialize()), qos=2)
 
     def run(self):
         self.subscriber.subscribe(self._incoming_mq_topic, 
-                                  callback=(lambda client, userdata, message:
-                                        self.local_task_queue.append(VideoTask.deserialize(
-                                            json.loads(message.payload.decode())
-                                            )))
-        )
+                                  callback=(lambda client, userdata, message:(
+                                      self.lock.acquire(), 
+                                      self.local_task_queue.append(VideoTask.deserialize(json.loads(message.payload.decode()))), 
+                                      self.lock.release())),
+                                      qos=2                                     
+                                  )
         self.subscriber.client.loop_start()
         self.publisher.client.loop_start()
         while True:
@@ -89,7 +94,7 @@ class VideoProcessor1(Processor):
                 print(task.get_priority())
                 print(f"Processing task {task.get_seq_id()} from source {task.get_source_id()}")
                 process_result = self.process_frames(self.decompress_frames(task.get_data()))
-                print(f"Processed result: {process_result}")
+                # print(f"Processed result: {process_result}")
                 processed_task = VideoTask(process_result, task.get_seq_id(), task.get_source_id(), self.get_priority())
                 self.send_task_to_outgoing_mq(processed_task)
                 
@@ -112,14 +117,45 @@ class VideoProcessor1(Processor):
         return frames
 
     def process_frames(self, frames):
+        resized_frames = [self.resize_frame(frame, 160, 90) for frame in frames]
+        compressed_video = self.compress_frames(resized_frames)
+        base64_frame = base64.b64encode(compressed_video).decode('utf-8')
         grays = [self.compute_average_gray(frame) for frame in frames]
         average_grays = np.mean(grays)
-        return average_grays
+        colors = [self.compute_average_color(frame) for frame in frames]
+        average_colors = np.mean(colors, axis=0)
+
+        
+        return json.dumps({"average_grays": average_grays,
+                           "average_colors": average_colors.tolist(),
+                           "resized_frames": base64_frame})
     
     def compute_average_gray(self, frame):
         gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
         average_gray = np.mean(gray)
         return average_gray
+    
+    def compute_average_color(self, frame):
+        average_color_per_row = np.average(frame, axis=0)
+        average_color = np.average(average_color_per_row, axis=0)
+        return average_color
+    
+    def resize_frame(self, frame, width, height):
+        resized_frame = cv2.resize(frame, (width, height))
+        return resized_frame
+    
+    def compress_frames(self, frames):
+        fourcc = cv2.VideoWriter_fourcc(*'mp4v')
+        height, width, _ = frames[0].shape
+        out = cv2.VideoWriter(f'temp_{self.get_id()}.mp4', fourcc, 30, (width, height))
+        for frame in frames:
+            out.write(frame)
+        out.release()
+        with open(f'temp_{self.get_id()}.mp4', 'rb') as f:
+            compressed_video = f.read()
+        # delete the temporary file
+        os.remove(f'temp_{self.get_id()}.mp4')
+        return compressed_video    
 
 
 if __name__ == '__main__':

@@ -8,6 +8,7 @@ from framework.service.distributor import Distributor
 from framework.message_queue.mqtt import MqttSubscriber, MqttPublisher
 import json
 import re
+import threading
 
 if __name__ == '__main__':
     from video_task import VideoTask
@@ -28,6 +29,8 @@ class VideoDistributor(Distributor):
         self.topic_mapping_rules = topic_mapping_rules
         self.subscriber = MqttSubscriber(mqtt_host, mqtt_port, mqtt_username, mqtt_password, mqtt_client_id+"_subscriber")
         self.publisher = MqttPublisher(mqtt_host, mqtt_port, mqtt_username, mqtt_password, mqtt_client_id+"_publisher")
+        # This will be accessed by different threads, so we need to use a lock
+        self.lock = threading.Lock()
         self.local_task_queue = []
 
     @classmethod
@@ -45,7 +48,8 @@ class VideoDistributor(Distributor):
         return self._incoming_mq_topic
     
     def get_task_from_incoming_mq(self) -> VideoTask:
-        return self.local_task_queue.pop(0)
+        with self.lock:
+            return self.local_task_queue.pop(0)
 
     def distribute_task_to_outgoing_mq_list(self, task: VideoTask):
         source_id = task.get_source_id()
@@ -57,17 +61,18 @@ class VideoDistributor(Distributor):
                 outgoing_mq_topic = re.sub(rule, self.topic_mapping_rules[rule], source_id)
                 break
         if outgoing_mq_topic is not None:
-            self.publisher.publish(outgoing_mq_topic, json.dumps(task.serialize()))
+            self.publisher.publish(outgoing_mq_topic, json.dumps(task.serialize()), qos=2)
             print(f"Distributed task {task.get_seq_id()} from source {task.get_source_id()} to {outgoing_mq_topic}")
          
 
     def run(self):
         self.subscriber.subscribe(self._incoming_mq_topic, 
-                                  callback=(lambda client, userdata, message:
-                                        self.local_task_queue.append(VideoTask.deserialize(
-                                            json.loads(message.payload.decode())
-                                            )))
-        )
+                                  callback=(lambda client, userdata, message:(
+                                      self.lock.acquire(), 
+                                      self.local_task_queue.append(VideoTask.deserialize(json.loads(message.payload.decode()))), 
+                                      self.lock.release())),
+                                      qos=2                                     
+                                  )
         self.subscriber.client.loop_start()
         self.publisher.client.loop_start()
         while True:
