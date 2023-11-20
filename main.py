@@ -88,11 +88,11 @@
 
 
 if __name__ == '__main__':
-    from examples.video_generator import VideoGenerator
-    from examples.video_processor_stage_1 import VideoProcessor1
-    from examples.video_processor_stage_2 import VideoProcessor2
-    from examples.video_distributor import VideoDistributor
-    from examples.video_aggregator import VideoAggregator
+    from video_example_with_mqtt.video_generator import VideoGenerator
+    from video_example_with_mqtt.video_processor_stage_1 import VideoProcessor1
+    from video_example_with_mqtt.video_processor_stage_2 import VideoProcessor2
+    from video_example_with_mqtt.video_distributor import VideoDistributor
+    from video_example_with_mqtt.video_aggregator import VideoAggregator
 
     import cv2
     # parse yaml file "app_config_template.yaml"

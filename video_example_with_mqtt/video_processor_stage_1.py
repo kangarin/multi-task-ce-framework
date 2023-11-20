@@ -88,11 +88,11 @@ class VideoProcessor1(Processor):
 
 
                 task = self.get_task_from_incoming_mq()
-                print(task.get_seq_id())
-                print(task.get_source_id())
-                print(len(task.get_data()))
-                print(task.get_priority())
-                print(f"Processing task {task.get_seq_id()} from source {task.get_source_id()}")
+                # print(task.get_seq_id())
+                # print(task.get_source_id())
+                # print(len(task.get_data()))
+                # print(task.get_priority())
+                print(f"Processing task {task.get_seq_id()} from source {task.get_source_id()}, task size: {len(task.get_data())}")
                 process_result = self.process_frames(self.decompress_frames(task.get_data()))
                 # print(f"Processed result: {process_result}")
                 processed_task = VideoTask(process_result, task.get_seq_id(), task.get_source_id(), self.get_priority())
