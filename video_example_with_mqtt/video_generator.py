@@ -17,9 +17,15 @@ else:
     from .video_task import VideoTask
 
 class VideoGenerator(Generator):
-    def __init__(self, data_source, id, mq_topic, priority, tuned_parameters,
-                 mqtt_host='localhost', mqtt_port=1883, mqtt_username='admin', 
-                 mqtt_password='admin'):
+    def __init__(self, data_source: object, 
+                 id: str, 
+                 mq_topic: str, 
+                 priority: int,
+                 tuned_parameters: dict,
+                 mqtt_host: str ='localhost', 
+                 mqtt_port: int =1883, 
+                 mqtt_username: str ='admin', 
+                 mqtt_password: str ='admin'):
         super().__init__(data_source, id, mq_topic, priority, tuned_parameters)
         mqtt_client_id=str(id)
         self.publisher = MqttPublisher(mqtt_host, mqtt_port, mqtt_username, mqtt_password, mqtt_client_id)
@@ -123,8 +129,12 @@ if __name__ == '__main__':
     import argparse
     parser = argparse.ArgumentParser(description='Video generator')
     parser.add_argument('--id', type=str, help='generator id')
+    parser.add_argument('--data_source', type=str, help='data source')
     id = parser.parse_args().id
-    generator = VideoGenerator("/Users/wenyidai/GitHub/video-dag-manager/input/traffic-720p.mp4", f'generator_{id}',
-                                'testapp/generator', 0, {"frames_per_task": 5, "skipping_frame_interval": 5})
+    data_source = parser.parse_args().data_source
+    # generator = VideoGenerator("/Users/wenyidai/GitHub/video-dag-manager/input/traffic-720p.mp4", f'generator_{id}',
+    #                             'testapp/generator', 0, {"frames_per_task": 5, "skipping_frame_interval": 5})
+    generator = VideoGenerator(data_source, f'generator_{id}',
+                               'testapp/generator', 0, {"frames_per_task": 5, "skipping_frame_interval": 5})
     generator.run()
 
