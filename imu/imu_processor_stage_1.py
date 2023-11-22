@@ -115,6 +115,7 @@ class ImuProcessor1(Processor):
         # 将NumPy数组转换为Python列表
         displace = displacement.tolist()
         json_data = json.dumps({"displacement": displace})
+        print(json_data)
         return json_data
 
     def getRelativeRotation(self, lpms_gyro, lpms_time, R):

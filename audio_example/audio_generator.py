@@ -20,7 +20,7 @@ else:
 
 class AudioGenerator(Generator):
     def __init__(self, data_source, id, mq_topic, priority, tuned_parameters,
-                 mqtt_host='138.3.208.203', mqtt_port=1883, mqtt_username='admin',
+                 mqtt_host='localhost', mqtt_port=1883, mqtt_username='admin',
                  mqtt_password='admin'):
         super().__init__(data_source, id, mq_topic, priority, tuned_parameters)
         mqtt_client_id = str(id)
@@ -91,6 +91,6 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Audio generator')
     parser.add_argument('--id', type=str, default=1, help='generator id')
     id = parser.parse_args().id
-    generator = AudioGenerator(r"drill_noise.wav", f'generator_{id}',
+    generator = AudioGenerator(r"/Users/wenyidai/GitHub/multi-task-ce-framework/audio_example/drill_noise.wav", f'generator_{id}',
                                'testapp/generator', 0, {"frames_per_task": 4, "mode": 2})
     generator.run()

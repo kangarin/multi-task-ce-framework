@@ -24,7 +24,7 @@ else:
 class AudioProcessor1(Processor):
     def __init__(self, id: str, incoming_mq_topic: str, outgoing_mq_topic: str,
                  priority: int, tuned_parameters: dict,
-                 mqtt_host: str = '138.3.208.203', mqtt_port: int = 1883, mqtt_username: str = 'admin',
+                 mqtt_host: str = 'localhost', mqtt_port: int = 1883, mqtt_username: str = 'admin',
                  mqtt_password: str = 'admin'):
         super().__init__(id, incoming_mq_topic, outgoing_mq_topic, priority, tuned_parameters)
         mqtt_client_id = str(id)

@@ -17,7 +17,7 @@ else:
 
 class AudioAggregator(Aggregator):
     def __init__(self, id: str, incoming_mq_topic: str, tuned_parameters: dict = {'window_size': 10},
-                 mqtt_host: str = '138.3.208.203', mqtt_port: int = 1883, mqtt_username: str = 'admin',
+                 mqtt_host: str = 'localhost', mqtt_port: int = 1883, mqtt_username: str = 'admin',
                  mqtt_password: str = 'admin'):
         super().__init__(id, incoming_mq_topic, tuned_parameters)
         mqtt_client_id = str(id)

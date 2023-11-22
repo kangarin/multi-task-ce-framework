@@ -175,6 +175,6 @@ if __name__ == '__main__':
     id = parser.parse_args().id
     # data_source = parser.parse_args().data_source
 
-    generator = ImuGenerator('twosample.csv', f'generator_{id}',
+    generator = ImuGenerator('/Users/wenyidai/GitHub/multi-task-ce-framework/imu/twosample.csv', f'generator_{id}',
                              'testapp/generator', 0, {})
     generator.run()
