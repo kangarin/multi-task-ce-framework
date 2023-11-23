@@ -12,13 +12,17 @@ global aggregator
 
 # flask part
 
-from flask import Flask
+from flask import Flask, jsonify
+from flask_cors import CORS
+
+Flask.logger_name = "listlogger"
 app = Flask(__name__)
+CORS(app)
 
 @app.route('/result')
 def result():
     with aggregator.lock:
-        return aggregator.get_latest_results()
+        return jsonify(aggregator.result_window)
 
 # end of flask part
 
@@ -117,7 +121,7 @@ class VideoAggregator(Aggregator):
         print(f"Aggregated task {task.get_seq_id()} from source {task.get_source_id()}")
 
 
-def start_flask(port=7788):
+def start_flask(port=9856):
     app.run(host="localhost", port=port)
 
 if __name__ == '__main__':
