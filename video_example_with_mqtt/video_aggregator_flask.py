@@ -17,7 +17,8 @@ app = Flask(__name__)
 
 @app.route('/result')
 def result():
-    return json.dumps(aggregator.get_latest_results())
+    with aggregator.lock:
+        return aggregator.get_latest_results()
 
 # end of flask part
 
@@ -83,7 +84,8 @@ class VideoAggregator(Aggregator):
             if len(self.local_task_queue) > 0:
                 task = self.get_task_from_incoming_mq()
                 print(f"Aggregating task {task.get_seq_id()} from source {task.get_source_id()}")
-                self.insert_result(task)
+                with self.lock:
+                    self.insert_result(task)
                 # print(f"Aggregated task {task.get_seq_id()} from source {task.get_source_id()}")
                 # for testing
                 if task.get_seq_id() % output_frequency == 0:
