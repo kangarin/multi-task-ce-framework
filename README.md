@@ -35,3 +35,6 @@ The 'id' should be unique for each service instance. Naming convention should
 follow the rules:
 1. The generator should be named as `generator_dataflow_name_id`. For example, `generator_traffic_mainstreet_1`.
 2. The processor should be named as `processor_stage_id_instance_id`. For example, `processor_stage_1_instance_1`.
+
+### Priorities(TODO)
+Priorities are dynamically assigned, services should query their newest priority from the database(like redis). The priorities are set by the scheduler at the cloud.
