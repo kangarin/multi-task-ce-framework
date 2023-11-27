@@ -188,7 +188,7 @@
             {
                 "id": "1",
                 "management_params":{
-                    "service_name": "video_distributor_1",
+                    "service_name": "video_distributor_1_instance_1",
                     "description": "video distributor 1"
                 },
                 "execution_params":{
@@ -215,7 +215,7 @@
             {
                 "id": "2",
                 "management_params":{
-                    "service_name": "video_distributor_2",
+                    "service_name": "video_distributor_2_instance_2",
                     "description": "video distributor 2"
                 },
                 "execution_params":{
