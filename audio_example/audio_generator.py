@@ -91,6 +91,6 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Audio generator')
     parser.add_argument('--id', type=str, default=1, help='generator id')
     id = parser.parse_args().id
-    generator = AudioGenerator(r"/Users/wenyidai/GitHub/multi-task-ce-framework/audio_example/drill_noise.wav", f'generator_{id}',
+    generator = AudioGenerator(r"drill_noise.wav", f'generator_{id}',
                                'testapp/generator', 0, {"frames_per_task": 4, "mode": 2})
     generator.run()
