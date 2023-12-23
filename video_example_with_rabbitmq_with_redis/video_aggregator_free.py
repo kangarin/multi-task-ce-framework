@@ -31,7 +31,7 @@ if __name__ == '__main__':
 else:
     from .video_task import VideoTask
 
-class VideoAggregator(Aggregator):
+class VideoAggregatorFree(Aggregator):
     def __init__(self, id: str, incoming_mq_topic: str, tuned_parameters: dict = { 'window_size': 10 },
                  rabbitmq_host: str = 'localhost', rabbitmq_port: int = 5672, 
                  rabbitmq_username:str = 'guest', rabbitmq_password: str = 'guest',
@@ -42,7 +42,7 @@ class VideoAggregator(Aggregator):
         self.lock = threading.Lock()
         self.local_task_queue = []
         self.result_window = []
-        self.window_size = tuned_parameters['window_size']
+        # self.window_size = tuned_parameters['window_size']
 
     @classmethod
     def aggregator_type(cls) -> str:
@@ -114,8 +114,8 @@ class VideoAggregator(Aggregator):
             if not inserted:
                 self.result_window.append((seq_id, data))
         # if the result window is full, then remove the oldest result
-        if len(self.result_window) > self.window_size:
-            self.result_window.pop(0)
+        # if len(self.result_window) > self.window_size:
+        #     self.result_window.pop(0)
         print(f"Aggregated task {task.get_seq_id()} from source {task.get_source_id()}, priority: {task.get_priority()}")
 
 def start_flask(port=9856):
@@ -135,5 +135,5 @@ if __name__ == '__main__':
     flask_thread = threading.Thread(target=start_flask, args=(port,),daemon=True)
     flask_thread.start()
 
-    aggregator = VideoAggregator(f'video_aggregator_{id}', f'testapp/video_aggregator_{id}', { 'window_size': 8 })
+    aggregator = VideoAggregatorFree(f'video_aggregator_free_{id}', f'testapp/video_aggregator_free_{id}', { 'window_size': 8 })
     aggregator.run()

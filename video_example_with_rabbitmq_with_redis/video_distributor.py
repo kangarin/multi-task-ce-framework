@@ -6,6 +6,7 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
 from framework.service.distributor import Distributor
 from framework.message_queue.rabbitmq import RabbitmqPublisher, RabbitmqSubscriber
+from framework.database.redisClient import RedisClient  
 import json
 import re
 import threading
@@ -24,7 +25,8 @@ class VideoDistributor(Distributor):
                  rabbitmq_host: str = 'localhost', rabbitmq_port: int = 5672, 
                  rabbitmq_username:str = 'guest', rabbitmq_password: str = 'guest',
                  rabbitmq_max_priority: int = 10,
-                 topic_mapping_rules = {r'generator': r'aggregator'}) -> None:
+                 topic_mapping_rules = {r'generator': r'aggregator'},
+                 ) -> None:
         super().__init__(id, incoming_mq_topic)
         self.rabbitmq_host = rabbitmq_host
         self.rabbitmq_port = rabbitmq_port

@@ -8,24 +8,6 @@ from framework.message_queue.rabbitmq import RabbitmqSubscriber
 import json
 import threading
 
-global aggregator
-
-# flask part
-
-from flask import Flask, jsonify
-from flask_cors import CORS
-
-Flask.logger_name = "listlogger"
-app = Flask(__name__)
-CORS(app)
-
-@app.route('/result')
-def result():
-    with aggregator.lock:
-        return jsonify(aggregator.result_window)
-
-# end of flask part
-
 if __name__ == '__main__':
     from video_task import VideoTask
 else:
@@ -118,22 +100,12 @@ class VideoAggregator(Aggregator):
             self.result_window.pop(0)
         print(f"Aggregated task {task.get_seq_id()} from source {task.get_source_id()}, priority: {task.get_priority()}")
 
-def start_flask(port=9856):
-    app.run(host="localhost", port=port)
-
 if __name__ == '__main__':
     import argparse
     parser = argparse.ArgumentParser(description='Video aggregator')
     parser.add_argument('--id', type=str, help='aggregator id')
-    parser.add_argument('--port', type=int, help='port')
     # parser.add_argument('--window_size', type=int, help='window size')
     id = parser.parse_args().id
-    port = parser.parse_args().port
     # window_size = parser.parse_args().window_size
-
-    # 启动flask服务
-    flask_thread = threading.Thread(target=start_flask, args=(port,),daemon=True)
-    flask_thread.start()
-
     aggregator = VideoAggregator(f'video_aggregator_{id}', f'testapp/video_aggregator_{id}', { 'window_size': 8 })
     aggregator.run()

@@ -8,10 +8,10 @@ from framework.message_queue.rabbitmq import RabbitmqPublisher, RabbitmqSubscrib
 import json
 import logging
 import time
-import cv2
-import base64
-import numpy as np
 import threading
+import base64
+import cv2
+import numpy as np
 import random
 from queue import PriorityQueue as PQ
 
@@ -20,7 +20,7 @@ if __name__ == '__main__':
 else:
     from .video_task import VideoTask
 
-class VideoProcessor1(Processor):
+class VideoProcessor2(Processor):
     def __init__(self, id: str, incoming_mq_topic: str, outgoing_mq_topic: str, 
                  priority: int, tuned_parameters: dict,
                  rabbitmq_host: str = 'localhost', rabbitmq_port: int = 5672, 
@@ -40,7 +40,7 @@ class VideoProcessor1(Processor):
 
     @classmethod
     def processor_description(cls) -> str:
-        return 'Video processor1'
+        return 'Video processor2'
 
     def get_id(self) -> str:
         return self._id
@@ -84,31 +84,27 @@ class VideoProcessor1(Processor):
 
         while True:
             if not self.local_task_queue.empty():
-
-                # task = self.get_task_from_incoming_mq()
-                # print(task.get_seq_id())
-                # print(task.get_source_id())
-                # print(task.get_data())
-                # continue
-
                 task = self.get_task_from_incoming_mq()
                 # print(task.get_seq_id())
                 # print(task.get_source_id())
-                # print(len(task.get_data()))
+                # print(task.get_data())
                 # print(task.get_priority())
                 print(f"Processing task {task.get_seq_id()} from source {task.get_source_id()}, task size: {len(task.get_data())}, priority: {task.get_priority()}")
-                process_result = self.process_frames(self.decompress_frames(task.get_data()))
-                # print(f"Processed result: {process_result}")
-                # processed_task = VideoTask(process_result, task.get_seq_id(), task.get_source_id(), self.get_priority())
+                task_data = json.loads(task.get_data())
+                task_result = {}
+                task_result["average_grays"] = task_data["average_grays"]
+                task_result["average_colors"] = task_data["average_colors"]
+                process_result = self.process_frames(self.decompress_frames(task_data["resized_frames"]))
+                task_result["motion_level"] = process_result
 
                 # sleep_time = random.randint(1, 5)
                 # print(f"Sleeping for {sleep_time} seconds")
                 # time.sleep(sleep_time)
 
-                processed_task = VideoTask(process_result, task.get_seq_id(), task.get_source_id(), task.get_priority())
+                # processed_task = VideoTask(json.dumps(task_result), task.get_seq_id(), task.get_source_id(), self.get_priority())
+                processed_task = VideoTask(json.dumps(task_result), task.get_seq_id(), task.get_source_id(), task.get_priority())
                 self.send_task_to_outgoing_mq(processed_task)
                 
-    
     def decompress_frames(self, compressed_video):
         video_data = base64.b64decode(compressed_video.encode('utf-8'))
         temp_file_path = f'temp_{self.get_id()}.mp4'
@@ -127,60 +123,47 @@ class VideoProcessor1(Processor):
         return frames
 
     def process_frames(self, frames):
-        resized_frames = [self.resize_frame(frame, 160, 90) for frame in frames]
-        compressed_video = self.compress_frames(resized_frames)
-        base64_frame = base64.b64encode(compressed_video).decode('utf-8')
-        grays = [self.compute_average_gray(frame) for frame in frames]
-        average_grays = np.mean(grays)
-        colors = [self.compute_average_color(frame) for frame in frames]
-        average_colors = np.mean(colors, axis=0)
+        # calculate the difference between each frame and the next frame
+        diff_frames = []
+        for i in range(len(frames)-1):
+            diff_frames.append(cv2.absdiff(frames[i], frames[i+1]))
+        # calculate the average difference
+        avg_diff = np.mean(diff_frames)
+        return avg_diff
+        # quantify the difference level
+        if avg_diff <= 10:
+            return "No motion"
+        elif avg_diff <= 20:
+            return "Low motion"
+        elif avg_diff <= 30:
+            return "Medium motion"
+        else:
+            return "High motion"
+
+
+
+
+
+
+
+
+
+
 
         
-        return json.dumps({"average_grays": average_grays,
-                           "average_colors": average_colors.tolist(),
-                           "resized_frames": base64_frame})
-    
-    def compute_average_gray(self, frame):
-        gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
-        average_gray = np.mean(gray)
-        return average_gray
-    
-    def compute_average_color(self, frame):
-        average_color_per_row = np.average(frame, axis=0)
-        average_color = np.average(average_color_per_row, axis=0)
-        return average_color
-    
-    def resize_frame(self, frame, width, height):
-        resized_frame = cv2.resize(frame, (width, height))
-        return resized_frame
-    
-    def compress_frames(self, frames):
-        fourcc = cv2.VideoWriter_fourcc(*'mp4v')
-        height, width, _ = frames[0].shape
-        out = cv2.VideoWriter(f'temp_{self.get_id()}.mp4', fourcc, 30, (width, height))
-        for frame in frames:
-            out.write(frame)
-        out.release()
-        with open(f'temp_{self.get_id()}.mp4', 'rb') as f:
-            compressed_video = f.read()
-        # delete the temporary file
-        os.remove(f'temp_{self.get_id()}.mp4')
-        return compressed_video    
 
 
 if __name__ == '__main__':
-    # parse args from cmd
-    import argparse
-    parser = argparse.ArgumentParser(description='Video processor')
-    parser.add_argument('--id', type=str, help='processor id')
-    # parser.add_argument('--incoming_mq_topic', type=str, help='incoming message queue topic')
-    # parser.add_argument('--outgoing_mq_topic', type=str, help='outgoing message queue topic')
-    # parser.add_argument('--priority', type=int, help='processor priority')
-    # parser.add_argument('--tuned_parameters', type=str, help='processor tuned parameters')
-    args = parser.parse_args()
-    id = args.id
-    processor = VideoProcessor1(f'video_processor_stage_1_instance_{id}', 'testapp/video_generator', 'testapp/video_processor_stage_1', 0, {})
-    processor.run()
 
+    import os
+    rabbit_mq_host = os.environ['RABBIT_MQ_IP']
+    rabbit_mq_port = int(os.environ['RABBIT_MQ_PORT'])
+    incoming_mq_topic = os.environ['RABBIT_MQ_INCOMING_QUEUE']
+    outgoing_mq_topic = os.environ['RABBIT_MQ_OUTGOING_QUEUE']
+    max_priority = int(os.environ['RABBIT_MQ_MAX_PRIORITY'])
+    id = os.environ['ID']
+
+    processor = VideoProcessor2(f'video_processor_stage_2_instance_{id}', incoming_mq_topic, outgoing_mq_topic, max_priority, {}, rabbit_mq_host, rabbit_mq_port)
+    processor.run()
 
 

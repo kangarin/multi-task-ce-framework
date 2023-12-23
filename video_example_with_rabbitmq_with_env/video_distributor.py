@@ -87,10 +87,13 @@ class VideoDistributor(Distributor):
                 self.distribute_task_to_outgoing_mq_list(task)
 
 if __name__ == '__main__':
-    # test
-    import argparse
-    parser = argparse.ArgumentParser(description='Video distributor')
-    parser.add_argument('--id', type=str, help='distributor id')
-    id = parser.parse_args().id
-    distributor = VideoDistributor(f'video_distributor_{id}', 'testapp/video_processor_stage_2')
+
+    import os
+    rabbit_mq_host = os.environ['RABBIT_MQ_IP']
+    rabbit_mq_port = int(os.environ['RABBIT_MQ_PORT'])
+    incoming_mq_topic = os.environ['RABBIT_MQ_INCOMING_QUEUE']
+    max_priority = int(os.environ['RABBIT_MQ_MAX_PRIORITY'])
+    id = os.environ['ID']
+
+    distributor = VideoDistributor(f'video_distributor_{id}', incoming_mq_topic, rabbit_mq_host, rabbit_mq_port)
     distributor.run()

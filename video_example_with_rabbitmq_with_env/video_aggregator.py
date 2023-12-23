@@ -119,21 +119,21 @@ class VideoAggregator(Aggregator):
         print(f"Aggregated task {task.get_seq_id()} from source {task.get_source_id()}, priority: {task.get_priority()}")
 
 def start_flask(port=9856):
-    app.run(host="localhost", port=port)
+    app.run(host="0.0.0.0", port=port)
 
 if __name__ == '__main__':
-    import argparse
-    parser = argparse.ArgumentParser(description='Video aggregator')
-    parser.add_argument('--id', type=str, help='aggregator id')
-    parser.add_argument('--port', type=int, help='port')
-    # parser.add_argument('--window_size', type=int, help='window size')
-    id = parser.parse_args().id
-    port = parser.parse_args().port
-    # window_size = parser.parse_args().window_size
+
+    import os
+    rabbit_mq_host = os.environ['RABBIT_MQ_IP']
+    rabbit_mq_port = int(os.environ['RABBIT_MQ_PORT'])
+    incoming_mq_topic = os.environ['RABBIT_MQ_INCOMING_QUEUE']
+    max_priority = int(os.environ['RABBIT_MQ_MAX_PRIORITY'])
+    flask_port = int(os.environ['FLASK_PORT'])
+    id = os.environ['ID']
 
     # 启动flask服务
-    flask_thread = threading.Thread(target=start_flask, args=(port,),daemon=True)
+    flask_thread = threading.Thread(target=start_flask, args=(flask_port,),daemon=True)
     flask_thread.start()
 
-    aggregator = VideoAggregator(f'video_aggregator_{id}', f'testapp/video_aggregator_{id}', { 'window_size': 8 })
+    aggregator = VideoAggregator(f'video_aggregator_{id}', incoming_mq_topic, { 'window_size': 8 }, rabbit_mq_host, rabbit_mq_port)
     aggregator.run()

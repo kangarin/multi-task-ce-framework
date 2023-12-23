@@ -96,7 +96,7 @@ class VideoGenerator(Generator):
                 print(f"Generated task {task.get_seq_id()} from source {task.get_source_id()} with priority {task.get_priority()}")
                 id += 1
                 temp_frame_buffer = []
-                time.sleep(10)
+                time.sleep(1)
 
 
             # base64_frame = base64.b64encode(frame).decode('utf-8')
@@ -130,15 +130,16 @@ class VideoGenerator(Generator):
 
 if __name__ == '__main__':
 
-    import argparse
-    parser = argparse.ArgumentParser(description='Video generator')
-    parser.add_argument('--id', type=str, help='generator id')
-    parser.add_argument('--data_source', type=str, help='data source')
-    id = parser.parse_args().id
-    data_source = parser.parse_args().data_source
-    # generator = VideoGenerator("/Users/wenyidai/GitHub/video-dag-manager/input/input.mov", f'generator_{id}',
+    import os
+    data_source = os.environ['DATA_SOURCE']
+    rabbit_mq_host = os.environ['RABBIT_MQ_IP']
+    rabbit_mq_port = int(os.environ['RABBIT_MQ_PORT'])
+    mq_topic = os.environ['RABBIT_MQ_QUEUE']
+    max_priority = int(os.environ['RABBIT_MQ_MAX_PRIORITY'])
+    id = os.environ['ID']
+
+    # generator = VideoGenerator("/Users/wenyidai/GitHub/video-dag-manager/input/traffic-720p.mp4", f'generator_{id}',
     #                             'testapp/generator', 0, {"frames_per_task": 5, "skipping_frame_interval": 5})
-    generator = VideoGenerator(data_source, f'generator_{id}',
-                               'testapp/generator', 0, {"frames_per_task": 5, "skipping_frame_interval": 5})
+    generator = VideoGenerator(data_source, f'video_generator_{id}', mq_topic, max_priority, {"frames_per_task": 5, "skipping_frame_interval": 5}, rabbit_mq_host, rabbit_mq_port)
     generator.run()
 

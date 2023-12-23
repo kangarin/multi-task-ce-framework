@@ -169,17 +169,16 @@ class VideoProcessor1(Processor):
 
 
 if __name__ == '__main__':
-    # parse args from cmd
-    import argparse
-    parser = argparse.ArgumentParser(description='Video processor')
-    parser.add_argument('--id', type=str, help='processor id')
-    # parser.add_argument('--incoming_mq_topic', type=str, help='incoming message queue topic')
-    # parser.add_argument('--outgoing_mq_topic', type=str, help='outgoing message queue topic')
-    # parser.add_argument('--priority', type=int, help='processor priority')
-    # parser.add_argument('--tuned_parameters', type=str, help='processor tuned parameters')
-    args = parser.parse_args()
-    id = args.id
-    processor = VideoProcessor1(f'video_processor_stage_1_instance_{id}', 'testapp/video_generator', 'testapp/video_processor_stage_1', 0, {})
+
+    import os
+    rabbit_mq_host = os.environ['RABBIT_MQ_IP']
+    rabbit_mq_port = int(os.environ['RABBIT_MQ_PORT'])
+    incoming_mq_topic = os.environ['RABBIT_MQ_INCOMING_QUEUE']
+    outgoing_mq_topic = os.environ['RABBIT_MQ_OUTGOING_QUEUE']
+    max_priority = int(os.environ['RABBIT_MQ_MAX_PRIORITY'])
+    id = os.environ['ID']
+
+    processor = VideoProcessor1(f'video_processor_stage_1_instance_{id}', incoming_mq_topic, outgoing_mq_topic, max_priority, {}, rabbit_mq_host, rabbit_mq_port)
     processor.run()
 
 

@@ -5,6 +5,7 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
 from framework.service.processor import Processor
 from framework.message_queue.rabbitmq import RabbitmqPublisher, RabbitmqSubscriber
+from framework.database.redisClient import RedisClient
 import json
 import logging
 import time
@@ -25,7 +26,10 @@ class VideoProcessor1(Processor):
                  priority: int, tuned_parameters: dict,
                  rabbitmq_host: str = 'localhost', rabbitmq_port: int = 5672, 
                  rabbitmq_username:str = 'guest', rabbitmq_password: str = 'guest',
-                 rabbitmq_max_priority: int = 10):
+                 rabbitmq_max_priority: int = 10,                 
+                 redis_host: str = 'localhost',
+                 redis_port: int = 6379,
+                 redis_db: int = 0):
         super().__init__(id, incoming_mq_topic, outgoing_mq_topic, priority, tuned_parameters)
         mqtt_client_id=str(id)
         self.subscriber = RabbitmqSubscriber(rabbitmq_host, rabbitmq_port, rabbitmq_username, rabbitmq_password, incoming_mq_topic, rabbitmq_max_priority)
@@ -33,6 +37,8 @@ class VideoProcessor1(Processor):
         # This will be accessed by different threads, so we need to use a lock
         self.lock = threading.Lock()
         self.local_task_queue = PQ()
+        self.redis_client = RedisClient(redis_host, redis_port, redis_db)
+        self.redis_priority_key = id
 
     @classmethod
     def processor_type(cls) -> str:
@@ -83,7 +89,9 @@ class VideoProcessor1(Processor):
         threading.Thread(target=self.subscriber.channel.start_consuming, daemon=True).start()
 
         while True:
-            if not self.local_task_queue.empty():
+            with self.lock:
+                is_queue_empty = self.local_task_queue.empty()
+            if not is_queue_empty:
 
                 # task = self.get_task_from_incoming_mq()
                 # print(task.get_seq_id())
@@ -104,8 +112,9 @@ class VideoProcessor1(Processor):
                 # sleep_time = random.randint(1, 5)
                 # print(f"Sleeping for {sleep_time} seconds")
                 # time.sleep(sleep_time)
-
-                processed_task = VideoTask(process_result, task.get_seq_id(), task.get_source_id(), task.get_priority())
+                self.set_priority(self.get_priority_from_redis())
+                print(f"Processor {self.get_id()} has priority {self.get_priority()}")
+                processed_task = VideoTask(process_result, task.get_seq_id(), task.get_source_id(), self.get_priority())
                 self.send_task_to_outgoing_mq(processed_task)
                 
     
@@ -166,6 +175,11 @@ class VideoProcessor1(Processor):
         # delete the temporary file
         os.remove(f'temp_{self.get_id()}.mp4')
         return compressed_video    
+    
+    def get_priority_from_redis(self):
+        p = self.redis_client.get(self.redis_priority_key) 
+        return int(p) if p else 10
+
 
 
 if __name__ == '__main__':

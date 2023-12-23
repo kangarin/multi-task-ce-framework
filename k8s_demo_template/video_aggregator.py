@@ -32,9 +32,14 @@ else:
     from .video_task import VideoTask
 
 class VideoAggregator(Aggregator):
-    def __init__(self, id: str, incoming_mq_topic: str, tuned_parameters: dict = { 'window_size': 10 },
-                 rabbitmq_host: str = 'localhost', rabbitmq_port: int = 5672, 
-                 rabbitmq_username:str = 'guest', rabbitmq_password: str = 'guest',
+    def __init__(self, 
+                 id: str, 
+                 incoming_mq_topic: str, 
+                 tuned_parameters: dict,
+                 rabbitmq_host: str = 'localhost', 
+                 rabbitmq_port: int = 5672, 
+                 rabbitmq_username:str = 'guest', 
+                 rabbitmq_password: str = 'guest',
                  rabbitmq_max_priority: int = 10):
         super().__init__(id, incoming_mq_topic, tuned_parameters)
         self.subscriber = RabbitmqSubscriber(rabbitmq_host, rabbitmq_port, rabbitmq_username, rabbitmq_password, incoming_mq_topic, rabbitmq_max_priority)
@@ -122,18 +127,28 @@ def start_flask(port=9856):
     app.run(host="localhost", port=port)
 
 if __name__ == '__main__':
-    import argparse
-    parser = argparse.ArgumentParser(description='Video aggregator')
-    parser.add_argument('--id', type=str, help='aggregator id')
-    parser.add_argument('--port', type=int, help='port')
-    # parser.add_argument('--window_size', type=int, help='window size')
-    id = parser.parse_args().id
-    port = parser.parse_args().port
-    # window_size = parser.parse_args().window_size
+
+    import os
+    id = os.environ['ID']
+    incoming_mq_topic = os.environ['RABBIT_MQ_INCOMING_QUEUE']
+    tuned_parameters_init = json.loads(os.environ['TUNED_PARAMETERS_INIT'])
+    rabbit_mq_host = os.environ['RABBIT_MQ_IP']
+    rabbit_mq_port = int(os.environ['RABBIT_MQ_PORT'])
+    rabbit_mq_username = os.environ['RABBIT_MQ_USERNAME']
+    rabbit_mq_password = os.environ['RABBIT_MQ_PASSWORD']
+    max_priority = int(os.environ['RABBIT_MQ_MAX_PRIORITY'])
+    flask_port = int(os.environ['FLASK_PORT'])
 
     # 启动flask服务
-    flask_thread = threading.Thread(target=start_flask, args=(port,),daemon=True)
+    flask_thread = threading.Thread(target=start_flask, args=(flask_port,),daemon=True)
     flask_thread.start()
 
-    aggregator = VideoAggregator(f'video_aggregator_{id}', f'testapp/video_aggregator_{id}', { 'window_size': 8 })
+    aggregator = VideoAggregator(id, 
+                                 incoming_mq_topic, 
+                                 tuned_parameters_init, 
+                                 rabbit_mq_host, 
+                                 rabbit_mq_port, 
+                                 rabbit_mq_username, 
+                                 rabbit_mq_password, 
+                                 max_priority)
     aggregator.run()

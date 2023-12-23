@@ -5,6 +5,7 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
 from framework.service.processor import Processor
 from framework.message_queue.rabbitmq import RabbitmqPublisher, RabbitmqSubscriber
+from framework.database.redisClient import RedisClient
 import json
 import logging
 import time
@@ -21,18 +22,32 @@ else:
     from .video_task import VideoTask
 
 class VideoProcessor2(Processor):
-    def __init__(self, id: str, incoming_mq_topic: str, outgoing_mq_topic: str, 
-                 priority: int, tuned_parameters: dict,
-                 rabbitmq_host: str = 'localhost', rabbitmq_port: int = 5672, 
-                 rabbitmq_username:str = 'guest', rabbitmq_password: str = 'guest',
-                 rabbitmq_max_priority: int = 10):
-        super().__init__(id, incoming_mq_topic, outgoing_mq_topic, priority, tuned_parameters)
-        mqtt_client_id=str(id)
+    def __init__(self, 
+                 id: str, 
+                 incoming_mq_topic: str, 
+                 outgoing_mq_topic: str, 
+                 priority: int, 
+                 tuned_parameters_init: dict,
+                 tuned_parameters_redis_key: str,
+                 priority_redis_key: str,
+                 rabbitmq_host: str = 'localhost', 
+                 rabbitmq_port: int = 5672, 
+                 rabbitmq_username:str = 'guest', 
+                 rabbitmq_password: str = 'guest',
+                 rabbitmq_max_priority: int = 10,                 
+                 redis_host: str = 'localhost',
+                 redis_port: int = 6379,
+                 redis_db: int = 0):
+        super().__init__(id, incoming_mq_topic, outgoing_mq_topic, priority, tuned_parameters_init)
         self.subscriber = RabbitmqSubscriber(rabbitmq_host, rabbitmq_port, rabbitmq_username, rabbitmq_password, incoming_mq_topic, rabbitmq_max_priority)
         self.publisher = RabbitmqPublisher(rabbitmq_host, rabbitmq_port, rabbitmq_username, rabbitmq_password, outgoing_mq_topic, rabbitmq_max_priority)
         # This will be accessed by different threads, so we need to use a lock
         self.lock = threading.Lock()
         self.local_task_queue = PQ()
+        self.redis_client = RedisClient(redis_host, redis_port, redis_db)
+        self.redis_priority_key = id
+        self.tuned_parameters_redis_key = tuned_parameters_redis_key
+        self.priority_redis_key = priority_redis_key
 
     @classmethod
     def processor_type(cls) -> str:
@@ -83,13 +98,16 @@ class VideoProcessor2(Processor):
         threading.Thread(target=self.subscriber.channel.start_consuming, daemon=True).start()
 
         while True:
-            if not self.local_task_queue.empty():
+            with self.lock:
+                is_queue_empty = self.local_task_queue.empty()
+            if not is_queue_empty:
                 task = self.get_task_from_incoming_mq()
                 # print(task.get_seq_id())
                 # print(task.get_source_id())
                 # print(task.get_data())
                 # print(task.get_priority())
                 print(f"Processing task {task.get_seq_id()} from source {task.get_source_id()}, task size: {len(task.get_data())}, priority: {task.get_priority()}")
+                logging.info(f"Processing task {task.get_seq_id()} from source {task.get_source_id()}, task size: {len(task.get_data())}, priority: {task.get_priority()}")
                 task_data = json.loads(task.get_data())
                 task_result = {}
                 task_result["average_grays"] = task_data["average_grays"]
@@ -102,7 +120,9 @@ class VideoProcessor2(Processor):
                 # time.sleep(sleep_time)
 
                 # processed_task = VideoTask(json.dumps(task_result), task.get_seq_id(), task.get_source_id(), self.get_priority())
-                processed_task = VideoTask(json.dumps(task_result), task.get_seq_id(), task.get_source_id(), task.get_priority())
+                # self.set_priority(self.get_priority_from_redis())
+                print(f"Processor {self.get_id()} has priority {self.get_priority()}")
+                processed_task = VideoTask(json.dumps(task_result), task.get_seq_id(), task.get_source_id(), self.get_priority())
                 self.send_task_to_outgoing_mq(processed_task)
                 
     def decompress_frames(self, compressed_video):
@@ -140,32 +160,43 @@ class VideoProcessor2(Processor):
         else:
             return "High motion"
 
-
-
-
-
-
-
-
-
-
-
-        
+    def get_priority_from_redis(self):
+        p = self.redis_client.get(self.redis_priority_key) 
+        return int(p) if p else 10    
 
 
 if __name__ == '__main__':
-    # parse args from cmd
-    import argparse
-    parser = argparse.ArgumentParser(description='Video processor')
-    parser.add_argument('--id', type=str, help='processor id')
-    # parser.add_argument('--incoming_mq_topic', type=str, help='incoming message queue topic')
-    # parser.add_argument('--outgoing_mq_topic', type=str, help='outgoing message queue topic')
-    # parser.add_argument('--priority', type=int, help='processor priority')
-    # parser.add_argument('--tuned_parameters', type=str, help='processor tuned parameters')
-    args = parser.parse_args()
-    id = args.id
-    processor = VideoProcessor2(f'video_processor_stage_2_instance_{id}', 'testapp/video_processor_stage_1', 'testapp/video_processor_stage_2', 0, {})
+
+    import os
+    id = os.environ['ID']
+    incoming_mq_topic = os.environ['RABBIT_MQ_INCOMING_QUEUE']
+    outgoing_mq_topic = os.environ['RABBIT_MQ_OUTGOING_QUEUE']
+    priority = int(os.environ['INIT_PRIORITY'])
+    tuned_parameters_init = json.loads(os.environ['TUNED_PARAMETERS_INIT'])
+    tuned_parameters_redis_key = os.environ['TUNED_PARAMETERS_REDIS_KEY']
+    priority_redis_key = os.environ['PRIORITY_REDIS_KEY']
+    rabbit_mq_host = os.environ['RABBIT_MQ_IP']
+    rabbit_mq_port = int(os.environ['RABBIT_MQ_PORT'])
+    rabbit_mq_username = os.environ['RABBIT_MQ_USERNAME']
+    rabbit_mq_password = os.environ['RABBIT_MQ_PASSWORD']
+    max_priority = int(os.environ['RABBIT_MQ_MAX_PRIORITY'])
+    redis_host = os.environ['REDIS_IP']
+    redis_port = int(os.environ['REDIS_PORT'])
+    redis_db = int(os.environ['REDIS_DB'])
+
+    processor = VideoProcessor2(id,
+                                incoming_mq_topic,
+                                outgoing_mq_topic,
+                                priority,
+                                tuned_parameters_init,
+                                tuned_parameters_redis_key,
+                                priority_redis_key,
+                                rabbit_mq_host,
+                                rabbit_mq_port,
+                                rabbit_mq_username,
+                                rabbit_mq_password,
+                                max_priority,
+                                redis_host,
+                                redis_port,
+                                redis_db)
     processor.run()
-
-
-

@@ -1,0 +1,17 @@
+# 从指定路径dockerfile构建镜像
+docker build -t <image_name> -f <dockerfile_path> <context_path>
+
+# docker run 进入bash
+docker run --rm -it <image_name> bash
+
+# 启动rtsp服务器
+docker run --rm -it \
+-e MTX_PROTOCOLS=tcp \
+-p 8554:8554 \
+-p 1935:1935 \
+-p 8888:8888 \
+-p 8889:8889 \
+-p 8890:8890/udp \bluenviron/mediamtx
+
+# 本地ffmpeg推流
+sudo ffmpeg -re -i traffic-720p.mp4 -f rtsp rtsp://localhost:8554/mystream

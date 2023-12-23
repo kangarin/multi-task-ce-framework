@@ -129,11 +129,11 @@ if __name__ == '__main__':
     # parser.add_argument('--window_size', type=int, help='window size')
     id = parser.parse_args().id
     port = parser.parse_args().port
-    # window_size = parser.parse_args().window_size
 
     # 启动flask服务
     flask_thread = threading.Thread(target=start_flask, args=(port,),daemon=True)
     flask_thread.start()
-
-    aggregator = VideoAggregator(f'video_aggregator_{id}', f'testapp/video_aggregator_{id}', { 'window_size': 8 })
+    
+    # window_size = parser.parse_args().window_size
+    aggregator = VideoAggregator(f'aggregator_{id}', f'testapp/aggregator_{id}', { 'window_size': 8 })
     aggregator.run()

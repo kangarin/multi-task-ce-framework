@@ -6,6 +6,7 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
 from framework.service.distributor import Distributor
 from framework.message_queue.rabbitmq import RabbitmqPublisher, RabbitmqSubscriber
+from framework.database.redisClient import RedisClient  
 import json
 import re
 import threading
@@ -20,11 +21,16 @@ else:
 
 
 class VideoDistributor(Distributor):
-    def __init__(self, id: str, incoming_mq_topic: str,  
-                 rabbitmq_host: str = 'localhost', rabbitmq_port: int = 5672, 
-                 rabbitmq_username:str = 'guest', rabbitmq_password: str = 'guest',
+    def __init__(self, 
+                 id: str, 
+                 incoming_mq_topic: str,  
+                 rabbitmq_host: str = 'localhost', 
+                 rabbitmq_port: int = 5672, 
+                 rabbitmq_username:str = 'guest', 
+                 rabbitmq_password: str = 'guest',
                  rabbitmq_max_priority: int = 10,
-                 topic_mapping_rules = {r'generator': r'aggregator'}) -> None:
+                 topic_mapping_rules = {r'generator': r'aggregator'},
+                 ) -> None:
         super().__init__(id, incoming_mq_topic)
         self.rabbitmq_host = rabbitmq_host
         self.rabbitmq_port = rabbitmq_port
@@ -87,10 +93,15 @@ class VideoDistributor(Distributor):
                 self.distribute_task_to_outgoing_mq_list(task)
 
 if __name__ == '__main__':
-    # test
-    import argparse
-    parser = argparse.ArgumentParser(description='Video distributor')
-    parser.add_argument('--id', type=str, help='distributor id')
-    id = parser.parse_args().id
-    distributor = VideoDistributor(f'video_distributor_{id}', 'testapp/video_processor_stage_2')
+
+    import os
+    id = os.environ['ID']
+    incoming_mq_topic = os.environ['RABBIT_MQ_INCOMING_QUEUE']
+    rabbit_mq_host = os.environ['RABBIT_MQ_IP']
+    rabbit_mq_port = int(os.environ['RABBIT_MQ_PORT'])
+    rabbit_mq_username = os.environ['RABBIT_MQ_USERNAME']
+    rabbit_mq_password = os.environ['RABBIT_MQ_PASSWORD']
+    max_priority = int(os.environ['RABBIT_MQ_MAX_PRIORITY'])
+
+    distributor = VideoDistributor(id, incoming_mq_topic, rabbit_mq_host, rabbit_mq_port, rabbit_mq_username, rabbit_mq_password, max_priority)
     distributor.run()
