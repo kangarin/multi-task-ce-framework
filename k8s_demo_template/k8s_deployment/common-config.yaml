@@ -1,0 +1,14 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: common-config
+  namespace: testapp
+data:
+  RABBIT_MQ_IP: "192.168.0.109"
+  RABBIT_MQ_PORT: "5672"
+  RABBIT_MQ_USERNAME: guest
+  RABBIT_MQ_PASSWORD: guest
+  RABBIT_MQ_MAX_PRIORITY: "10"
+  REDIS_IP: "192.168.0.109"
+  REDIS_PORT: "6379"
+  REDIS_DB: "0"
