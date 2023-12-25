@@ -125,14 +125,16 @@ class VideoGenerator(Generator):
     def compress_frames(self, frames):
         fourcc = cv2.VideoWriter_fourcc(*'mp4v')
         height, width, _ = frames[0].shape
-        out = cv2.VideoWriter(f'temp_{self.get_id()}.mp4', fourcc, 30, (width, height))
+        timestamp = time.time()
+        temp_file_path = f'{timestamp}_temp_{self.get_id()}.mp4'
+        out = cv2.VideoWriter(temp_file_path, fourcc, 30, (width, height))
         for frame in frames:
             out.write(frame)
         out.release()
-        with open(f'temp_{self.get_id()}.mp4', 'rb') as f:
+        with open(temp_file_path, 'rb') as f:
             compressed_video = f.read()
         # delete the temporary file
-        os.remove(f'temp_{self.get_id()}.mp4')
+        os.remove(temp_file_path)
         return compressed_video
     
     def generate_random_priority(self, low=1, high=10):

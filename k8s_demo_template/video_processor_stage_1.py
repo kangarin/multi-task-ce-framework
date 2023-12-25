@@ -130,7 +130,8 @@ class VideoProcessor1(Processor):
     
     def decompress_frames(self, compressed_video):
         video_data = base64.b64decode(compressed_video.encode('utf-8'))
-        temp_file_path = f'temp_{self.get_id()}.mp4'
+        timestamp = time.time()
+        temp_file_path = f'{timestamp}_temp_{self.get_id()}.mp4'
         with open(temp_file_path, 'wb') as f:
             f.write(video_data)
         frames = []
@@ -176,14 +177,17 @@ class VideoProcessor1(Processor):
     def compress_frames(self, frames):
         fourcc = cv2.VideoWriter_fourcc(*'mp4v')
         height, width, _ = frames[0].shape
-        out = cv2.VideoWriter(f'temp_{self.get_id()}.mp4', fourcc, 30, (width, height))
+        timestamp = time.time()
+        temp_file_path = f'{timestamp}_temp_{self.get_id()}.mp4'
+
+        out = cv2.VideoWriter(temp_file_path, fourcc, 30, (width, height))
         for frame in frames:
             out.write(frame)
         out.release()
-        with open(f'temp_{self.get_id()}.mp4', 'rb') as f:
+        with open(temp_file_path, 'rb') as f:
             compressed_video = f.read()
         # delete the temporary file
-        os.remove(f'temp_{self.get_id()}.mp4')
+        os.remove(temp_file_path)
         return compressed_video    
     
     def get_priority_from_redis(self):

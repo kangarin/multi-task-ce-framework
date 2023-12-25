@@ -42,5 +42,5 @@ ENV RABBIT_MQ_PASSWORD="guest"
 ENV RABBIT_MQ_MAX_PRIORITY="10"
 
 # 启动脚本
-# CMD ["python3", "examples/video_aggregator.py"]
-CMD ["bash"]
+CMD ["python3", "examples/video_distributor.py"]
+# CMD ["bash"]

@@ -30,7 +30,7 @@ spec:
         - name: INIT_PRIORITY
           value: 5
         - name: TUNED_PARAMETERS_INIT
-          value: { "a": 1, "b": 2, "c": 3}
+          value: '{ "a": 1, "b": 2, "c": 3}'
         - name: TUNED_PARAMETERS_REDIS_KEY
           value: testapp/video_generator_1/tuned_parameters
         - name: PRIORITY_REDIS_KEY
@@ -70,7 +70,7 @@ spec:
         - name: INIT_PRIORITY
           value: 3
         - name: TUNED_PARAMETERS_INIT
-          value: { "a": 1, "b": 2, "c": 3}
+          value: '{ "a": 1, "b": 2, "c": 3}'
         - name: TUNED_PARAMETERS_REDIS_KEY
           value: testapp/video_generator_2/tuned_parameters
         - name: PRIORITY_REDIS_KEY

@@ -44,5 +44,5 @@ ENV RABBIT_MQ_MAX_PRIORITY="10"
 ENV FLASK_PORT="9854"
 
 # 启动脚本
-# CMD ["python3", "examples/video_aggregator.py"]
-CMD ["bash"]
+CMD ["python3", "examples/video_aggregator.py"]
+# CMD ["bash"]

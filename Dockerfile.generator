@@ -52,5 +52,5 @@ ENV REDIS_DB="0"
 
 
 # 启动脚本
-# CMD ["python3", "examples/video_aggregator.py"]
-CMD ["bash"]
+CMD ["python3", "examples/video_generator.py"]
+# CMD ["bash"]
