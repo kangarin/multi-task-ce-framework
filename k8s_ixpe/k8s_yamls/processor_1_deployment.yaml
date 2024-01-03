@@ -1,0 +1,23 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    kubeedge-app: ixpe-video-processor-stage-1
+  name: ixpe-video-processor-stage-1
+  namespace: default
+spec:
+  selector:
+    matchLabels:
+      kubeedge-app: ixpe-video-processor-stage-1
+  template:
+    metadata:
+      labels:
+        kubeedge-app: ixpe-video-processor-stage-1
+    spec:
+      hostNetwork: true
+      imagePullSecrets:
+      - name: harbor-docker-secret
+      containers:
+      - name: ixpe-video-processor-stage-1
+        image: mykubeedge.com/ixpe/ixpe_stg1
+        imagePullPolicy: IfNotPresent

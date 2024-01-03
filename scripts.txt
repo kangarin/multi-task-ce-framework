@@ -5,13 +5,34 @@ docker build -t <image_name> -f <dockerfile_path> <context_path>
 docker run --rm -it <image_name> bash
 
 # 启动rtsp服务器
-docker run --rm -it \
--e MTX_PROTOCOLS=tcp \
--p 8554:8554 \
--p 1935:1935 \
--p 8888:8888 \
--p 8889:8889 \
--p 8890:8890/udp \bluenviron/mediamtx
+docker run --rm -it -e MTX_PROTOCOLS=tcp -p 8554:8554 -p 1935:1935 -p 8888:8888 -p 8889:8889 -p 8890:8890/udp bluenviron/mediamtx
 
 # 本地ffmpeg推流
 sudo ffmpeg -re -i traffic-720p.mp4 -f rtsp rtsp://localhost:8554/mystream
+
+# 创建harbor镜像中心secret
+kubectl create secret docker-registry harbor-docker-secret --docker-server=mykubeedge.com --docker-username=admin --docker-password=Harbor12345
+
+# 镜像构建（在项目根目录下执行）
+docker build -t ixpe_gen -f k8s_ixpe/dockerfile/Dockerile.generator .
+docker build -t ixpe_stg1 -f k8s_ixpe/dockerfile/Dockerile.processor_stage_1_slim .
+docker build -t ixpe_stg2 -f k8s_ixpe/dockerfile/Dockerile.processor_stage_2_slim .
+docker build -t ixpe_stg3 -f k8s_ixpe/dockerfile/Dockerile.processor_stage_3_slim .
+docker build -t ixpe_dst -f k8s_ixpe/dockerfile/Dockerile.distributor .
+docker build -t ixpe_agr -f k8s_ixpe/dockerfile/Dockerile.aggregator .
+
+# 镜像推送
+docker tag ixpe_gen mykubeedge.com/ixpe/ixpe_gen
+docker push mykubeedge.com/ixpe/ixpe_gen
+
+docker tag ixpe_stg1 mykubeedge.com/ixpe/ixpe_stg1
+docker push mykubeedge.com/ixpe/ixpe_stg1
+
+docker tag ixpe_stg2 mykubeedge.com/ixpe/ixpe_stg2
+docker push mykubeedge.com/ixpe/ixpe_stg2
+
+docker tag ixpe_dst mykubeedge.com/ixpe/ixpe_dst
+docker push mykubeedge.com/ixpe/ixpe_dst
+
+docker tag ixpe_agr mykubeedge.com/ixpe/ixpe_agr
+docker push mykubeedge.com/ixpe/ixpe_agr

@@ -1,0 +1,23 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    kubeedge-app: ixpe-video-aggregator
+  name: ixpe-video-aggregator
+  namespace: default
+spec:
+  selector:
+    matchLabels:
+      kubeedge-app: ixpe-video-aggregator
+  template:
+    metadata:
+      labels:
+        kubeedge-app: ixpe-video-aggregator
+    spec:
+      hostNetwork: true
+      imagePullSecrets:
+      - name: harbor-docker-secret
+      containers:
+      - name: ixpe-video-aggregator
+        image: mykubeedge.com/ixpe/ixpe_agr
+        imagePullPolicy: IfNotPresent

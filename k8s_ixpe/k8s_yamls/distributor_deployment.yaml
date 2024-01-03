@@ -1,0 +1,23 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    kubeedge-app: ixpe-video-distributor
+  name: ixpe-video-distributor
+  namespace: default
+spec:
+  selector:
+    matchLabels:
+      kubeedge-app: ixpe-video-distributor
+  template:
+    metadata:
+      labels:
+        kubeedge-app: ixpe-video-distributor
+    spec:
+      hostNetwork: true
+      imagePullSecrets:
+      - name: harbor-docker-secret
+      containers:
+      - name: ixpe-video-distributor
+        image: mykubeedge.com/ixpe/ixpe_dst
+        imagePullPolicy: IfNotPresent
