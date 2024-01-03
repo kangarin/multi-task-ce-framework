@@ -12,17 +12,78 @@ global aggregator
 
 # flask part
 
-from flask import Flask, jsonify
+from flask import Flask, jsonify, render_template_string
 from flask_cors import CORS
 
 Flask.logger_name = "listlogger"
 app = Flask(__name__)
 CORS(app)
 
+
+# result returns a json in the following format:
+# [
+#     [seq_id,[{
+#         "frame": base64 encoded frame,
+#         "lps": a int number,
+#         "rps": a int number
+#     }]],
+#     [seq_id,[{
+#         "frame": base64 encoded frame,
+#         "lps": a int number,
+#         "rps": a int number
+#     }]],
+#     ...
+# ]
+#
+# images are encoded with the following code:
+# def encode_image(self, img):
+#     # 编码图像
+#     _, encoded_img = cv2.imencode('.jpg', img)
+#     encoded_img_bytes = encoded_img.tobytes()
+#     # 转换为 Base64 编码的字符串
+#     encoded_img_str = base64.b64encode(encoded_img_bytes).decode('utf-8')
+#     return encoded_img_str
+
+# def decode_image(self, encoded_img_str):
+#     # 将 Base64 编码的字符串转换回 bytes
+#     encoded_img_bytes = base64.b64decode(encoded_img_str)
+#     # 解码图像
+#     decoded_img = cv2.imdecode(np.frombuffer(encoded_img_bytes, np.uint8), cv2.IMREAD_COLOR)
+#     return decoded_img
+
+html = '''
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Result</title>
+</head>
+<body>
+    <h1>Result</h1>
+    <ul>
+        {% for seq_id, frames in result %}
+        <li>Sequence ID: {{ seq_id }}</li>
+        <ul>
+            {% for frame in frames %}
+            <li>Frame: <img src="data:image/jpeg;base64,{{ frame.frame }}" /></li>
+            <li>LPS: {{ frame.lps }}</li>
+            <li>RPS: {{ frame.rps }}</li>
+            {% endfor %}
+        </ul>
+        {% endfor %}
+    </ul>
+</body>
+</html>
+'''
+
 @app.route('/result')
 def result():
     with aggregator.lock:
-        return jsonify(aggregator.result_window)
+        return render_template_string(html, result=aggregator.result_window)
+
+# @app.route('/result')
+# def result():
+#     with aggregator.lock:
+#         return jsonify(aggregator.result_window)
 
 # end of flask part
 
