@@ -23,6 +23,7 @@ else:
 
 class VideoProcessor1(Processor):
     def __init__(self, 
+                 init_parameters: dict,
                  id: str, 
                  incoming_mq_topic: str, 
                  outgoing_mq_topic: str, 
@@ -39,6 +40,7 @@ class VideoProcessor1(Processor):
                  redis_port: int = 6379,
                  redis_db: int = 0):
         super().__init__(id, incoming_mq_topic, outgoing_mq_topic, priority, tuned_parameters_init)
+        self.init_parameters = init_parameters
         self.subscriber = RabbitmqSubscriber(rabbitmq_host, rabbitmq_port, rabbitmq_username, rabbitmq_password, incoming_mq_topic, rabbitmq_max_priority)
         self.publisher = RabbitmqPublisher(rabbitmq_host, rabbitmq_port, rabbitmq_username, rabbitmq_password, outgoing_mq_topic, rabbitmq_max_priority)
         # This will be accessed by different threads, so we need to use a lock
@@ -214,6 +216,7 @@ if __name__ == '__main__':
                 #  redis_port: int = 6379,
                 #  redis_db: int = 0):
     import os
+    init_parameters = os.environ['INIT_PARAMETERS']
     id = os.environ['ID']
     incoming_mq_topic = os.environ['RABBIT_MQ_INCOMING_QUEUE']
     outgoing_mq_topic = os.environ['RABBIT_MQ_OUTGOING_QUEUE']

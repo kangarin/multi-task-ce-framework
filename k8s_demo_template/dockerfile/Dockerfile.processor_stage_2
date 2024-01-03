@@ -33,13 +33,14 @@ COPY framework /app/framework
     # redis_db = int(os.environ['REDIS_DB'])
 
 # 设置环境变量
-ENV ID="testapp_video_processor_stage_1"
-ENV RABBIT_MQ_INCOMING_QUEUE="testapp/video_generator"
-ENV RABBIT_MQ_OUTGOING_QUEUE="testapp/video_processor_stage_1"
+ENV INIT_PARAMETERS='{"start_arg1": 5, "start_arg2": [(2,3),(4,5)]}'
+ENV ID="testapp_video_processor_stage_2"
+ENV RABBIT_MQ_INCOMING_QUEUE="testapp/video_processor_stage_1"
+ENV RABBIT_MQ_OUTGOING_QUEUE="testapp/video_processor_stage_2"
 ENV INIT_PRIORITY="5"
 ENV TUNED_PARAMETERS_INIT='{ "a": 1, "b": 2, "c": 3}'
-ENV TUNED_PARAMETERS_REDIS_KEY="testapp/video_generator_1/tuned_parameters"
-ENV PRIORITY_REDIS_KEY="testapp/video_generator_1/priority"
+ENV TUNED_PARAMETERS_REDIS_KEY="testapp/video_generator_2/tuned_parameters"
+ENV PRIORITY_REDIS_KEY="testapp/video_generator_2/priority"
 ENV RABBIT_MQ_IP="192.168.0.109"
 ENV RABBIT_MQ_PORT="5672"
 ENV RABBIT_MQ_USERNAME="guest"
@@ -51,5 +52,5 @@ ENV REDIS_DB="0"
 
 
 # 启动脚本
-CMD ["python3", "examples/video_processor_stage_1.py"]
+CMD ["python3", "examples/video_processor_stage_2.py"]
 # CMD ["bash"]

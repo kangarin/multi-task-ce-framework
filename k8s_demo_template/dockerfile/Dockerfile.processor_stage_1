@@ -9,16 +9,16 @@ WORKDIR /app
 # RUN pip install paho-mqtt -i https://pypi.tuna.tsinghua.edu.cn/simple
 RUN pip install pika -i https://pypi.tuna.tsinghua.edu.cn/simple
 RUN pip install redis -i https://pypi.tuna.tsinghua.edu.cn/simple
-# RUN pip install flask flask_cors -i https://pypi.tuna.tsinghua.edu.cn/simple
+RUN pip install flask flask_cors -i https://pypi.tuna.tsinghua.edu.cn/simple
 
 # 将本地文件夹复制到容器中
 COPY k8s_demo_template /app/examples
 COPY framework /app/framework
 
 
-    # data_source = os.environ['DATA_SOURCE']
     # id = os.environ['ID']
-    # mq_topic = os.environ['RABBIT_MQ_QUEUE']
+    # incoming_mq_topic = os.environ['RABBIT_MQ_INCOMING_QUEUE']
+    # outgoing_mq_topic = os.environ['RABBIT_MQ_OUTGOING_QUEUE']
     # priority = int(os.environ['INIT_PRIORITY'])
     # tuned_parameters_init = json.loads(os.environ['TUNED_PARAMETERS_INIT'])
     # tuned_parameters_redis_key = os.environ['TUNED_PARAMETERS_REDIS_KEY']
@@ -33,12 +33,12 @@ COPY framework /app/framework
     # redis_db = int(os.environ['REDIS_DB'])
 
 # 设置环境变量
-ENV DATA_SOURCE="rtsp://192.168.0.109:8554/mystream"
-ENV ID="testapp_video_generator_1"
-ENV SOURCE_NAME="video_generator_1"
-ENV RABBIT_MQ_QUEUE="testapp/video_generator"
+ENV INIT_PARAMETERS='{"start_arg1": 5, "start_arg2": [(2,3),(4,5)]}'
+ENV ID="testapp_video_processor_stage_1"
+ENV RABBIT_MQ_INCOMING_QUEUE="testapp/video_generator"
+ENV RABBIT_MQ_OUTGOING_QUEUE="testapp/video_processor_stage_1"
 ENV INIT_PRIORITY="5"
-ENV TUNED_PARAMETERS_INIT='{"frames_per_task": 5, "skipping_frame_interval": 5}'
+ENV TUNED_PARAMETERS_INIT='{ "a": 1, "b": 2, "c": 3}'
 ENV TUNED_PARAMETERS_REDIS_KEY="testapp/video_generator_1/tuned_parameters"
 ENV PRIORITY_REDIS_KEY="testapp/video_generator_1/priority"
 ENV RABBIT_MQ_IP="192.168.0.109"
@@ -52,5 +52,5 @@ ENV REDIS_DB="0"
 
 
 # 启动脚本
-CMD ["python3", "examples/video_generator.py"]
+CMD ["python3", "examples/video_processor_stage_1.py"]
 # CMD ["bash"]

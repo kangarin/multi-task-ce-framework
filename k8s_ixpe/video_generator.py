@@ -51,7 +51,7 @@ class VideoGenerator(Generator):
 
     @classmethod
     def generator_description(cls) -> str:
-        return 'Video generator'
+        return 'ixpe video generator'
 
     def get_data_source(self) -> object:
         return self._data_source
@@ -90,6 +90,10 @@ class VideoGenerator(Generator):
         frames_per_task = self.get_tuned_parameters()['frames_per_task']
         skipping_frame_interval = self.get_tuned_parameters()['skipping_frame_interval']
         temp_frame_buffer = []
+        
+        # 清除redis缓存的lps和rps，不然逻辑错误
+        redis_key_prefix_for_lps_and_rps = "ixpe_" + self.source_name
+        self.clear_redis_lps_and_rps(redis_key_prefix_for_lps_and_rps)
         while True:
 
             ret, frame = self._data_source.read()
@@ -105,7 +109,7 @@ class VideoGenerator(Generator):
                 # compress all the frames in the buffer into a short video, send it as a task, and empty the buffer
                 compressed_video = self.compress_frames(temp_frame_buffer)
                 base64_frame = base64.b64encode(compressed_video).decode('utf-8')
-                task = VideoTask(base64_frame, id, self.source_name, self.generate_random_priority(), self.get_tuned_parameters())
+                task = VideoTask(base64_frame, id, self.source_name, self.get_priority(), self.get_tuned_parameters())
                 self.send_task_to_mq(task)
                 print(f"Generated task {task.get_seq_id()} from source {task.get_source_id()} with priority {task.get_priority()}")
                 id += 1
@@ -142,6 +146,16 @@ class VideoGenerator(Generator):
     def generate_random_priority(self, low=1, high=10):
         import random
         return random.randint(low, high)
+    
+    def clear_redis_lps_and_rps(self, data_source_redis_key):
+        lps_key = f"{data_source_redis_key}_lps"
+        rps_key = f"{data_source_redis_key}_rps"
+        old_lps = self.redis_client.get(lps_key)
+        old_rps = self.redis_client.get(rps_key)
+        print(f"Redis keys {lps_key} and {rps_key} cleared, old lps: {old_lps}, old rps: {old_rps}")
+        self.redis_client.delete(lps_key)
+        self.redis_client.delete(rps_key)
+        print(f"Redis keys {lps_key} and {rps_key} cleared")
 
 
 if __name__ == '__main__':
@@ -167,7 +181,7 @@ if __name__ == '__main__':
 
 
     import os
-    init_parameters = os.environ['INIT_PARAMETERS']
+    init_parameters = json.loads(os.environ['INIT_PARAMETERS'])
     data_source = os.environ['DATA_SOURCE']
     id = os.environ['ID']
     source_name = os.environ['SOURCE_NAME']

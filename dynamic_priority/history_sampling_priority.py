@@ -23,7 +23,7 @@ class PriorityManager:
                 self.priority_threshold = history_records_sorted[::len(history_records_sorted) // self.priority_cnt]
                 self.first_time = False
                 print(self.priority_threshold)
-                print(self.history_records)
+                # print(self.history_records)
             return
         else:
             self.history_records_buffer.append(priority)
@@ -34,7 +34,7 @@ class PriorityManager:
                 history_records_sorted = sorted(self.history_records)
                 self.priority_threshold = history_records_sorted[::len(history_records_sorted) // self.priority_cnt]
                 print(self.priority_threshold)
-                print(self.history_records)
+                # print(self.history_records)
 
     def get_new_priority(self, old_priority) -> int:
         if len(self.priority_threshold) == 0:
@@ -46,10 +46,57 @@ class PriorityManager:
     
 if __name__ == "__main__":
     priority_manager = PriorityManager(history_length=1000, priority_cnt=8)
-    for i in range(1000):
+    for i in range(100):
         # priority_manager.add_record(np.random.randint(1, 9))
         # generate normal distribution
         priority_manager.add_record(np.random.normal(2, 1))
+
+    print(priority_manager.get_new_priority(1))
+    print(priority_manager.get_new_priority(2))
+    print(priority_manager.get_new_priority(3))
+    print(priority_manager.get_new_priority(4))
+    print(priority_manager.get_new_priority(5))
+    print(priority_manager.get_new_priority(6))
+    print(priority_manager.get_new_priority(7))
+    print(priority_manager.get_new_priority(8))
+
+    for i in range(500):
+        # priority_manager.add_record(np.random.randint(1, 9))
+        # generate normal distribution
+        priority_manager.add_record(np.random.normal(2, 1))
+
+    print("=======================")
+    print(priority_manager.get_new_priority(1))
+    print(priority_manager.get_new_priority(2))
+    print(priority_manager.get_new_priority(3))
+    print(priority_manager.get_new_priority(4))
+    print(priority_manager.get_new_priority(5))
+    print(priority_manager.get_new_priority(6))
+    print(priority_manager.get_new_priority(7))
+    print(priority_manager.get_new_priority(8))
+
+    for i in range(500):
+        # priority_manager.add_record(np.random.randint(1, 9))
+        # generate normal distribution
+        priority_manager.add_record(np.random.normal(5, 2))
+
+    print("=======================")
+
+    print(priority_manager.get_new_priority(1))
+    print(priority_manager.get_new_priority(2))
+    print(priority_manager.get_new_priority(3))
+    print(priority_manager.get_new_priority(4))
+    print(priority_manager.get_new_priority(5))
+    print(priority_manager.get_new_priority(6))
+    print(priority_manager.get_new_priority(7))
+    print(priority_manager.get_new_priority(8))
+
+    for i in range(1500):
+        # priority_manager.add_record(np.random.randint(1, 9))
+        # generate normal distribution
+        priority_manager.add_record(np.random.normal(8, 2))
+
+    print("=======================")
 
     print(priority_manager.get_new_priority(1))
     print(priority_manager.get_new_priority(2))

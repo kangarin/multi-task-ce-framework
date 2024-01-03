@@ -12,6 +12,7 @@ if __name__ == "__main__":
     # 统计信息示例
     statistics_data = {
         "service_name": "your_service_name",
+        "priority": 10,
         "metric1": 100,
         "metric2": 200,
         # 添加其他统计信息...
