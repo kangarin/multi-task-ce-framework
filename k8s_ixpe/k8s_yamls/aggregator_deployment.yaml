@@ -21,3 +21,5 @@ spec:
       - name: ixpe-video-aggregator
         image: mykubeedge.com/ixpe/ixpe_agr
         imagePullPolicy: IfNotPresent
+        ports:
+        - containerPort: 9854

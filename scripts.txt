@@ -14,25 +14,22 @@ sudo ffmpeg -re -i traffic-720p.mp4 -f rtsp rtsp://localhost:8554/mystream
 kubectl create secret docker-registry harbor-docker-secret --docker-server=mykubeedge.com --docker-username=admin --docker-password=Harbor12345
 
 # 镜像构建（在项目根目录下执行）
-docker build -t ixpe_gen -f k8s_ixpe/dockerfile/Dockerile.generator .
-docker build -t ixpe_stg1 -f k8s_ixpe/dockerfile/Dockerile.processor_stage_1_slim .
-docker build -t ixpe_stg2 -f k8s_ixpe/dockerfile/Dockerile.processor_stage_2_slim .
-docker build -t ixpe_stg3 -f k8s_ixpe/dockerfile/Dockerile.processor_stage_3_slim .
-docker build -t ixpe_dst -f k8s_ixpe/dockerfile/Dockerile.distributor .
-docker build -t ixpe_agr -f k8s_ixpe/dockerfile/Dockerile.aggregator .
+docker build -t ixpe_gen -f k8s_ixpe/dockerfile/Dockerfile.generator .
+docker build -t ixpe_stg1 -f k8s_ixpe/dockerfile/Dockerfile.processor_stage_1_slim .
+docker build -t ixpe_stg2 -f k8s_ixpe/dockerfile/Dockerfile.processor_stage_2_slim .
+docker build -t ixpe_stg3 -f k8s_ixpe/dockerfile/Dockerfile.processor_stage_3_slim .
+docker build -t ixpe_dst -f k8s_ixpe/dockerfile/Dockerfile.distributor .
+docker build -t ixpe_agr -f k8s_ixpe/dockerfile/Dockerfile.aggregator .
 
 # 镜像推送
-docker tag ixpe_gen mykubeedge.com/ixpe/ixpe_gen
-docker push mykubeedge.com/ixpe/ixpe_gen
+docker tag ixpe_gen mykubeedge.com/ixpe/ixpe_gen && docker push mykubeedge.com/ixpe/ixpe_gen
 
-docker tag ixpe_stg1 mykubeedge.com/ixpe/ixpe_stg1
-docker push mykubeedge.com/ixpe/ixpe_stg1
+docker tag ixpe_stg1 mykubeedge.com/ixpe/ixpe_stg1 && docker push mykubeedge.com/ixpe/ixpe_stg1
 
-docker tag ixpe_stg2 mykubeedge.com/ixpe/ixpe_stg2
-docker push mykubeedge.com/ixpe/ixpe_stg2
+docker tag ixpe_stg2 mykubeedge.com/ixpe/ixpe_stg2 && docker push mykubeedge.com/ixpe/ixpe_stg2
 
-docker tag ixpe_dst mykubeedge.com/ixpe/ixpe_dst
-docker push mykubeedge.com/ixpe/ixpe_dst
+docker tag ixpe_stg3 mykubeedge.com/ixpe/ixpe_stg3 && docker push mykubeedge.com/ixpe/ixpe_stg3
 
-docker tag ixpe_agr mykubeedge.com/ixpe/ixpe_agr
-docker push mykubeedge.com/ixpe/ixpe_agr
+docker tag ixpe_dst mykubeedge.com/ixpe/ixpe_dst && docker push mykubeedge.com/ixpe/ixpe_dst
+
+docker tag ixpe_agr mykubeedge.com/ixpe/ixpe_agr && docker push mykubeedge.com/ixpe/ixpe_agr

@@ -124,7 +124,7 @@ class VideoAggregator(Aggregator):
         print(f"Aggregated task {task.get_seq_id()} from source {task.get_source_id()}, priority: {task.get_priority()}")
 
 def start_flask(port=9856):
-    app.run(host="localhost", port=port)
+    app.run(host="0.0.0.0", port=port)
 
 if __name__ == '__main__':
 
