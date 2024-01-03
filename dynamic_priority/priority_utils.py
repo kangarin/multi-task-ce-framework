@@ -19,6 +19,10 @@ class PriorityProfiler:
         self.redis_priority_threshold_key = redis_priority_threshold_key
         self.redis_client = StrictRedis(redis_host, redis_port, redis_db)
 
+        # 清空 Redis 中的记录
+        self.clear_redis_records()
+        self.clear_redis_priority_threshold()
+
     def prune_records_and_get_latest_records(self):
         # 检查有序集合的长度
         current_length = self.redis_client.zcard(self.redis_record_key)
@@ -55,6 +59,12 @@ class PriorityProfiler:
 
         # 将优先级阈值写入 Redis
         self.redis_client.set(self.redis_priority_threshold_key, json.dumps(priority_threshold))
+
+    def clear_redis_records(self):
+        self.redis_client.delete(self.redis_record_key)
+        
+    def clear_redis_priority_threshold(self):
+        self.redis_client.delete(self.redis_priority_threshold_key)
 
 
 class PriorityReporter:
@@ -96,6 +106,7 @@ class PriorityReporter:
 
 
 if __name__ == "__main__":
+
     priority_profiler = PriorityProfiler(max_entries=100,
                                          cold_start_entries=50,
                                          priority_cnt=10,
@@ -109,6 +120,8 @@ if __name__ == "__main__":
                                          redis_host="localhost",
                                          redis_port=6379,
                                          redis_db=0)
+    
+
     import random
 
     for i in range(100):
@@ -119,7 +132,7 @@ if __name__ == "__main__":
             "metric1": 100,
             "metric2": 200,
             # 添加其他统计信息...
-            "timestamp": int(time.time()),
+            "timestamp": time.time_ns(),
         })
         time.sleep(0.1)
 
@@ -137,7 +150,7 @@ if __name__ == "__main__":
             "metric1": 100,
             "metric2": 200,
             # 添加其他统计信息...
-            "timestamp": int(time.time()),
+            "timestamp": time.time_ns(),
         })
         time.sleep(0.1)
         
