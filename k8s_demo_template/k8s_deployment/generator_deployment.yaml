@@ -1,0 +1,47 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    kubeedge-app: demo-video-generator
+  name: demo-video-generator
+  namespace: demo
+spec:
+  selector:
+    matchLabels:
+      kubeedge-app: demo-video-generator
+  template:
+    metadata:
+      labels:
+        kubeedge-app: demo-video-generator
+    spec:
+      hostNetwork: true
+      imagePullSecrets:
+      - name: harbor-docker-secret
+      containers:
+      - name: demo-video-generator
+        image: mykubeedge.com/demo/demo_gen
+        imagePullPolicy: IfNotPresent
+        envFrom:
+        - configMapRef:
+            name: common-config
+        env:
+        - name: INIT_PARAMETERS
+          value: '{"start_arg1": 5, "start_arg2": [(2,3),(4,5)]}'
+        - name: DATA_SOURCE
+          value: rtsp://192.168.0.109:8554/mystream
+        - name: ID
+          value: demo_video_generator_1
+          # this value MUST matches the value of RABBIT_MQ_INCOMING_QUEUE in the aggregator_deployment.yaml
+        - name: SOURCE_NAME
+          value: video_generator_1
+        - name: RABBIT_MQ_QUEUE
+          value: demo/video_generator
+        - name: INIT_PRIORITY
+          value: "5"
+        - name: TUNED_PARAMETERS_INIT
+          value: '{"frames_per_task": 5, "skipping_frame_interval": 5}'
+        - name: TUNED_PARAMETERS_REDIS_KEY
+          value: demo/video_generator_1/tuned_parameters
+        - name: PRIORITY_REDIS_KEY
+          value: demo/video_generator_1/priority
+        

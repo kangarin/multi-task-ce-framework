@@ -1,0 +1,36 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    kubeedge-app: demo-video-aggregator
+  name: demo-video-aggregator
+  namespace: default
+spec:
+  selector:
+    matchLabels:
+      kubeedge-app: demo-video-aggregator
+  template:
+    metadata:
+      labels:
+        kubeedge-app: demo-video-aggregator
+    spec:
+      hostNetwork: true
+      imagePullSecrets:
+      - name: harbor-docker-secret
+      containers:
+      - name: demo-video-aggregator
+        image: mykubeedge.com/demo/demo_agr
+        imagePullPolicy: IfNotPresent
+        ports:
+        - containerPort: 9854
+        envFrom:
+        - configMapRef:
+            name: common-config
+        env:
+        - name: ID
+          value: demo_video_aggregator_1
+          # this value MUST matches the value of SOURCE_NAME in the generator_deployment.yaml
+        - name: RABBIT_MQ_INCOMING_QUEUE
+          value: demo/video_aggregator_1
+        - name: TUNED_PARAMETERS_INIT
+          value: '{"window_size": 8}'
