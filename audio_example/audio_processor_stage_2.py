@@ -22,7 +22,7 @@ if __name__ == '__main__':
 else:
     from .audio_task import AudioTask
 
-model_path = '/Users/wenyidai/GitHub/multi-task-ce-framework/audio_example/model.pth'
+model_path = 'model.pth'
 device = torch.device("cuda:0" if (torch.cuda.is_available()) else "cpu")
 model = torch.jit.load(model_path, map_location=device)
 model.to(device)
@@ -120,7 +120,7 @@ class AudioProcessor2(Processor):
 
                 processed_task = AudioTask(task.get_data(), task.get_seq_id(), task.get_source_id(),
                                            self.get_priority(),
-                                           task.get_metadata())
+                                           json.dumps(task.get_metadata()))
                 self.send_task_to_outgoing_mq(processed_task)
 
     def infer(self, data, framerate):

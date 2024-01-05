@@ -93,8 +93,9 @@ class AudioProcessor1(Processor):
                 print(f"Processing task {task.get_seq_id()} from source {task.get_source_id()}")
                 data = base64.b64decode(task.get_data().encode('utf-8'))
                 process_result = self.remove_noise(data, task.get_metadata()['framerate'],
-                                                   task.get_metadata()['sampwidth'])
+                                                   task.get_metadata()['sampwidth']).tobytes()
                 # print(f"Processed result: {process_result}")
+
                 base64_process_result = base64.b64encode(process_result).decode('utf-8')
                 processed_task = AudioTask(base64_process_result, task.get_seq_id(), task.get_source_id(),
                                            self.get_priority(), task.get_metadata())
