@@ -91,7 +91,7 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Audio generator')
     parser.add_argument('--id', type=str, default=1, help='generator id')
     parser.add_argument('--resample_rate', type=int, default=0, help='resample rate')
-    parser.add_argument("--filename", type=str, help='audio filename')
+    parser.add_argument("--filename", type=str, default='1-1-car_horn.wav', help='audio filename')
     id = parser.parse_args().id
     resample_rate = parser.parse_args().resample_rate
     filename = parser.parse_args().filename
