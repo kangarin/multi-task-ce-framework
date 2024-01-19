@@ -136,7 +136,7 @@ if __name__ == '__main__':
     parser.add_argument('--data_source', type=str, help='data source')
     id = parser.parse_args().id
     data_source = parser.parse_args().data_source
-    # generator = VideoGenerator("/Users/wenyidai/GitHub/video-dag-manager/input/traffic-720p.mp4", f'generator_{id}',
+    # generator = VideoGenerator("/Users/wenyidai/GitHub/video-dag-manager/input/input.mov", f'generator_{id}',
     #                             'testapp/generator', 0, {"frames_per_task": 5, "skipping_frame_interval": 5})
     generator = VideoGenerator(data_source, f'generator_{id}',
                                'testapp/generator', 0, {"frames_per_task": 5, "skipping_frame_interval": 5})

@@ -164,7 +164,7 @@ if __name__ == '__main__':
     # parser.add_argument('--tuned_parameters', type=str, help='processor tuned parameters')
     args = parser.parse_args()
     id = args.id
-    processor = VideoProcessor2(f'processor_stage_2_instance_{id}', 'testapp/processor_stage_1', 'testapp/processor_stage_2', 0, {})
+    processor = VideoProcessor2(f'video_processor_stage_2_instance_{id}', 'testapp/video_processor_stage_1', 'testapp/video_processor_stage_2', 0, {})
     processor.run()
 
 

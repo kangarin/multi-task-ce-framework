@@ -1,0 +1,42 @@
+# 使用基础镜像（例如Python官方镜像）
+FROM jjanzic/docker-python3-opencv:latest
+
+# 设置工作目录
+WORKDIR /app
+
+# 安装所需的依赖项
+# RUN pip install opencv-python -i https://pypi.tuna.tsinghua.edu.cn/simple
+# RUN pip install paho-mqtt -i https://pypi.tuna.tsinghua.edu.cn/simple
+RUN pip install pika -i https://pypi.tuna.tsinghua.edu.cn/simple
+RUN pip install redis -i https://pypi.tuna.tsinghua.edu.cn/simple
+RUN pip install numpy scipy pillow torch torchvision tqdm -i https://pypi.tuna.tsinghua.edu.cn/simple
+
+# 将本地文件夹复制到容器中
+COPY k8s_ixpe /app/examples
+COPY framework /app/framework
+
+RUN pip install logzero -i https://pypi.tuna.tsinghua.edu.cn/simple
+
+# 设置环境变量
+ENV INIT_PARAMETERS='{"d_area" : [[440, 370], [790, 500]], "bar_area" : [[80, 390], [1130, 440], [80, 440], [1130, 490]]}'
+ENV ID="ixpe_video_processor_stage_1"
+ENV RABBIT_MQ_INCOMING_QUEUE="ixpe/video_generator"
+ENV RABBIT_MQ_OUTGOING_QUEUE="ixpe/video_processor_stage_1"
+ENV INIT_PRIORITY="5"
+ENV TUNED_PARAMETERS_INIT='{ "a": 1, "b": 2, "c": 3}'
+ENV TUNED_PARAMETERS_REDIS_KEY="ixpe/video_generator_1/tuned_parameters"
+ENV PRIORITY_REDIS_KEY="ixpe/video_generator_1/priority"
+ENV RABBIT_MQ_IP="172.27.149.95"
+ENV RABBIT_MQ_PORT="5672"
+ENV RABBIT_MQ_USERNAME="guest"
+ENV RABBIT_MQ_PASSWORD="guest"
+ENV RABBIT_MQ_MAX_PRIORITY="10"
+ENV REDIS_IP="172.27.149.95"
+ENV REDIS_PORT="6379"
+ENV REDIS_DB="0"
+
+
+# 启动脚本
+WORKDIR /app/examples
+CMD ["python3", "video_processor_stage_1.py"]
+# CMD ["bash"]

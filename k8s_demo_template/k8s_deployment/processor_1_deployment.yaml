@@ -1,0 +1,44 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    kubeedge-app: demo-video-processor-stage-1
+  name: demo-video-processor-stage-1
+  namespace: demo
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      kubeedge-app: demo-video-processor-stage-1
+  template:
+    metadata:
+      labels:
+        kubeedge-app: demo-video-processor-stage-1
+    spec:
+      hostNetwork: true
+      imagePullSecrets:
+      - name: harbor-docker-secret
+      containers:
+      - name: demo-video-processor-stage-1
+        image: mykubeedge.com/demo/demo_stg1
+        imagePullPolicy: IfNotPresent
+        envFrom:
+        - configMapRef:
+            name: common-config
+        env:
+        - name: INIT_PARAMETERS
+          value: '{"start_arg1": 5, "start_arg2": [(2,3),(4,5)]}'
+        - name: ID
+          value: demo_video_processor_stage_1
+        - name: RABBIT_MQ_INCOMING_QUEUE
+          value: demo/video_generator
+        - name: RABBIT_MQ_OUTGOING_QUEUE
+          value: demo/video_processor_stage_1
+        - name: INIT_PRIORITY
+          value: "5"
+        - name: TUNED_PARAMETERS_INIT
+          value: '{"a": 1, "b": 2, "c": 3}'
+        - name: TUNED_PARAMETERS_REDIS_KEY
+          value: demo/video_processor_stage_1/tuned_parameters
+        - name: PRIORITY_REDIS_KEY
+          value: demo/video_processor_stage_1/priority

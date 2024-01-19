@@ -62,3 +62,4 @@ docker network create app-network
 ### TODO
 1. docker开启远程访问（可有可无，可以通过节点的tcp连接交互）
 2. 数据库存储节点信息
+3. distributor的topic转换逻辑需要理清，现在太乱

@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ECharts 可视化</title>
+    <!-- 引入 ECharts -->
+    <script src="https://cdn.jsdelivr.net/npm/echarts/dist/echarts.min.js"></script>
+</head>
+<body>
+
+<!-- ECharts 容器 -->
+<div id="chart" style="width: 800px; height: 600px;"></div>
+
+<script>
+// 处理数据的函数
+function processData(rawData) {
+    return rawData.map(function(item) {
+        var id = item[0];
+        var jsonData = JSON.parse(item[1]);
+
+        return {
+            id: id,
+            average_grays: jsonData.average_grays,
+            average_colors: jsonData.average_colors,
+            motion_level: jsonData.motion_level
+        };
+    });
+}
+
+// 更新图表的函数
+function updateChart(processedData) {
+    var ids = processedData.map(function(item) {
+        return item.id;
+    });
+    var averageGrays = processedData.map(function(item) {
+        return item.average_grays;
+    });
+    var motionLevels = processedData.map(function(item) {
+        return item.motion_level;
+    });
+
+    var option = {
+        title: {
+            text: '数据可视化'
+        },
+        tooltip: {},
+        legend: {
+            data: ['平均灰度', '运动级别']
+        },
+        xAxis: {
+            data: ids
+        },
+        yAxis: [
+            {
+                type: 'value',
+                name: '平均灰度',
+                min: Math.min.apply(null, averageGrays),
+                max: Math.max.apply(null, averageGrays),
+                position: 'left',
+                axisLabel: {
+                    formatter: '{value}'
+                }
+            },
+            {
+                type: 'value',
+                name: '运动级别',
+                min: Math.min.apply(null, motionLevels),
+                max: Math.max.apply(null, motionLevels),
+                position: 'right',
+                axisLabel: {
+                    formatter: '{value}'
+                }
+            }
+        ],
+        series: [
+            {
+                name: '平均灰度',
+                type: 'bar',
+                data: averageGrays
+            },
+            {
+                name: '运动级别',
+                type: 'line',
+                yAxisIndex: 1,
+                data: motionLevels
+            }
+        ]
+    };
+
+    // 使用 ECharts 更新图表
+    chart.setOption(option);
+}
+
+// 模拟数据拉取函数
+function fetchData_mock() {
+    // 在这里使用实际的数据接口
+    // 这里使用setTimeout模拟异步请求
+    setTimeout(function() {
+        // 模拟从接口获取的数据
+        var rawData = [
+            [1, "{\"average_grays\": 244.9110967399691, \"average_colors\": [242.94153356481488, 245.89540817901243, 243.9240845871913], \"motion_level\": 1.0702719907407408}"],
+            [2, "{\"average_grays\": 245.23552777777778, \"average_colors\": [243.26042727623468, 246.22284722222236, 244.24646768904321], \"motion_level\": 1.3461342592592593}"],
+            // ... (将其余数据添加在这里)
+        ];
+
+        // 处理数据并更新图表
+        var processedData = processData(rawData);
+        updateChart(processedData);
+    }, 5000); // 间隔5秒钟拉取一次数据
+}
+
+// 拉取数据的函数
+function fetchData() {
+    fetch('http://localhost:9856/result')
+        .then(response => response.json())
+        .then(data => {
+            // 处理数据并更新图表
+            var processedData = processData(data);
+            updateChart(processedData);
+        })
+        .catch(error => console.error('Error fetching data:', error));
+}
+
+// 初始化图表
+var chart = echarts.init(document.getElementById('chart'));
+
+// 初始化图表数据
+fetchData();
+
+// 定时任务，每隔一段时间拉取一次数据
+setInterval(fetchData, 10000); // 间隔10秒钟拉取一次数据
+</script>
+
+</body>
+</html>

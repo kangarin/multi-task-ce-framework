@@ -1,0 +1,23 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    kubeedge-app: ixpe-video-generator
+  name: ixpe-video-generator
+  namespace: default
+spec:
+  selector:
+    matchLabels:
+      kubeedge-app: ixpe-video-generator
+  template:
+    metadata:
+      labels:
+        kubeedge-app: ixpe-video-generator
+    spec:
+      hostNetwork: true
+      imagePullSecrets:
+      - name: harbor-docker-secret
+      containers:
+      - name: ixpe-video-generator
+        image: mykubeedge.com/ixpe/ixpe_gen
+        imagePullPolicy: IfNotPresent

@@ -24,7 +24,7 @@ class VideoDistributor(Distributor):
                  rabbitmq_host: str = 'localhost', rabbitmq_port: int = 5672, 
                  rabbitmq_username:str = 'guest', rabbitmq_password: str = 'guest',
                  rabbitmq_max_priority: int = 10,
-                 topic_mapping_rules = {r'generator_(\w+)': r'testapp/aggregator_\1',}) -> None:
+                 topic_mapping_rules = {r'generator': r'aggregator'}) -> None:
         super().__init__(id, incoming_mq_topic)
         self.rabbitmq_host = rabbitmq_host
         self.rabbitmq_port = rabbitmq_port
@@ -57,17 +57,14 @@ class VideoDistributor(Distributor):
 
     def distribute_task_to_outgoing_mq_list(self, task: VideoTask):
         source_id = task.get_source_id()
-        # parse source_id and find the corresponding outgoing_mq_topic by matching the topic_mapping_rules
-        outgoing_mq_topic = None
-        for rule in self.topic_mapping_rules:
-            # if source_id matches certain pattern, then use the corresponding outgoing_mq_topic
-            if re.match(rule, source_id):
-                outgoing_mq_topic = re.sub(rule, self.topic_mapping_rules[rule], source_id)
-                break
-        if outgoing_mq_topic is not None:
-            self.publisher = RabbitmqPublisher(self.rabbitmq_host, self.rabbitmq_port, self.rabbitmq_username, self.rabbitmq_password, outgoing_mq_topic, self.rabbitmq_max_priority)
-            self.publisher.publish(json.dumps(task.serialize()), task.get_priority())
-            print(f"Distributed task {task.get_seq_id()} from source {task.get_source_id()} to {outgoing_mq_topic}, priority {task.get_priority()}")
+        # substitute the source_id with the topic_mapping_rules
+        for key, value in self.topic_mapping_rules.items():
+            source_id = re.sub(key, value, source_id)
+
+        outgoing_mq_topic = self._incoming_mq_topic.split('/')[-2] + '/' + source_id
+        self.publisher = RabbitmqPublisher(self.rabbitmq_host, self.rabbitmq_port, self.rabbitmq_username, self.rabbitmq_password, outgoing_mq_topic, self.rabbitmq_max_priority)
+        self.publisher.publish(json.dumps(task.serialize()), task.get_priority())
+        print(f"Distributed task {task.get_seq_id()} from source {task.get_source_id()} to {outgoing_mq_topic}, priority {task.get_priority()}")
          
 
     def run(self):
@@ -95,5 +92,5 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Video distributor')
     parser.add_argument('--id', type=str, help='distributor id')
     id = parser.parse_args().id
-    distributor = VideoDistributor(f'distributor_{id}', 'testapp/processor_stage_2')
+    distributor = VideoDistributor(f'video_distributor_{id}', 'testapp/video_processor_stage_2')
     distributor.run()

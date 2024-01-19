@@ -1,0 +1,32 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    kubeedge-app: demo-video-distributor
+  name: demo-video-distributor
+  namespace: default
+spec:
+  selector:
+    matchLabels:
+      kubeedge-app: demo-video-distributor
+  template:
+    metadata:
+      labels:
+        kubeedge-app: demo-video-distributor
+    spec:
+      hostNetwork: true
+      imagePullSecrets:
+      - name: harbor-docker-secret
+      containers:
+      - name: demo-video-distributor
+        image: mykubeedge.com/demo/demo_dst
+        imagePullPolicy: IfNotPresent
+        envFrom:
+        - configMapRef:
+            name: common-config
+        env:
+        - name: ID
+          value: demo_video_distributor_1
+        - name: RABBIT_MQ_INCOMING_QUEUE
+          value: demo/video_processor_stage_2
+
