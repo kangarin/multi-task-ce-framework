@@ -1,5 +1,6 @@
 # add base path to sys.path
-import os, sys
+import os
+import sys
 
 print(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
@@ -10,7 +11,6 @@ import json
 import time
 import base64
 import wave
-import numpy as np
 
 if __name__ == '__main__':
     from audio_task import AudioTask
@@ -20,7 +20,7 @@ else:
 
 class AudioGenerator(Generator):
     def __init__(self, data_source, id, mq_topic, priority, tuned_parameters,
-                 mqtt_host='localhost', mqtt_port=1883, mqtt_username='admin',
+                 mqtt_host='138.3.208.203', mqtt_port=1883, mqtt_username='admin',
                  mqtt_password='admin'):
         super().__init__(data_source, id, mq_topic, priority, tuned_parameters)
         mqtt_client_id = str(id)
@@ -76,7 +76,7 @@ class AudioGenerator(Generator):
             data = self._data_source.readframes(min(cnt, nframes - id * cnt))
             base64_data = base64.b64encode(data).decode('utf-8')
 
-            self.get_tuned_parameters().update({'sampwidth': sampwidth, 'framerate': framerate})
+            self.get_tuned_parameters().update({'nchannels': nchannels, 'sampwidth': sampwidth, 'framerate': framerate})
             task = AudioTask(base64_data, id, self._id, self._priority, self.get_tuned_parameters())
             self.send_task_to_mq(task)
             print(f"Generated task {task.get_seq_id()} from source {task.get_source_id()}")
@@ -90,7 +90,12 @@ if __name__ == '__main__':
 
     parser = argparse.ArgumentParser(description='Audio generator')
     parser.add_argument('--id', type=str, default=1, help='generator id')
+    parser.add_argument('--resample_rate', type=int, default=0, help='resample rate')
+    parser.add_argument("--filename", type=str, help='audio filename')
     id = parser.parse_args().id
-    generator = AudioGenerator(r"drill_noise.wav", f'generator_{id}',
-                               'testapp/generator', 0, {"frames_per_task": 4, "mode": 2})
+    resample_rate = parser.parse_args().resample_rate
+    filename = parser.parse_args().filename
+    generator = AudioGenerator(os.path.join(os.getcwd(), 'dataset', filename), f'generator_{id}',
+                               'testapp/generator', 0,
+                               {"frames_per_task": 4, "mode": 2, "resample_rate": resample_rate})
     generator.run()

@@ -1,6 +1,7 @@
 # add base path to sys.path
 import base64
-import os, sys
+import os
+import sys
 import wave
 
 import numpy as np
@@ -9,7 +10,7 @@ print(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
 from framework.service.aggregator import Aggregator
-from framework.message_queue.mqtt import MqttSubscriber, MqttPublisher
+from framework.message_queue.mqtt import MqttSubscriber
 import json
 import threading
 
@@ -52,7 +53,7 @@ else:
 
 class AudioAggregator(Aggregator):
     def __init__(self, id: str, incoming_mq_topic: str, tuned_parameters: dict = {'window_size': 10},
-                 mqtt_host: str = 'localhost', mqtt_port: int = 1883, mqtt_username: str = 'admin',
+                 mqtt_host: str = '138.3.208.203', mqtt_port: int = 1883, mqtt_username: str = 'admin',
                  mqtt_password: str = 'admin'):
         super().__init__(id, incoming_mq_topic, tuned_parameters)
         mqtt_client_id = str(id)

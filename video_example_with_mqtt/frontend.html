@@ -16,6 +16,7 @@
 <script>
 // 处理数据的函数
 function processData(rawData) {
+    console.log(rawData)
     return rawData.map(function(item) {
         var id = item[0];
         var jsonData = JSON.parse(item[1]);
@@ -127,7 +128,7 @@ function fetchData() {
 var chart = echarts.init(document.getElementById('chart'));
 
 // 初始化图表数据
-fetchData();
+fetchData_mock();
 
 // 定时任务，每隔一段时间拉取一次数据
 setInterval(fetchData, 10000); // 间隔10秒钟拉取一次数据
