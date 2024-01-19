@@ -91,5 +91,5 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Imu distributor')
     parser.add_argument('--id', type=str, help='distributor id')
     id = parser.parse_args().id
-    distributor = ImuDistributor(f'distributor_{id}', '$share/python/testapp/processor_stage_1')
+    distributor = ImuDistributor(f'distributor_{id}', '$share/python/testapp/processor_stage_2')
     distributor.run()
