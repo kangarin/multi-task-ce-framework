@@ -1,5 +1,6 @@
 # add base path to sys.path
-import os, sys
+import os
+import sys
 
 print(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
@@ -22,7 +23,7 @@ else:
 
 class AudioDistributor(Distributor):
     def __init__(self, id: str, incoming_mq_topic: str,
-                 mqtt_host: str = 'localhost', mqtt_port: int = 1883,
+                 mqtt_host: str = '138.3.208.203', mqtt_port: int = 1883,
                  mqtt_username: str = 'admin', mqtt_password: str = 'admin',
                  topic_mapping_rules={r'generator_(\w+)': r'testapp/aggregator_\1', }) -> None:
         super().__init__(id, incoming_mq_topic)
