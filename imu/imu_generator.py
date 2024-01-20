@@ -32,7 +32,8 @@ class ImuGenerator(Generator):
         super().__init__(data_source, id, mq_topic, priority, tuned_parameters)
         mqtt_client_id = str(id)
         self.publisher = MqttPublisher(mqtt_host, mqtt_port, mqtt_username, mqtt_password, mqtt_client_id)
-        self._data_source = pd.read_csv(data_source)
+        # self._data_source = pd.read_csv(data_source)
+        self._data_source = data_source
 
     @classmethod
     def generator_type(cls) -> str:
@@ -70,28 +71,32 @@ class ImuGenerator(Generator):
     def run(self):
         self.publisher.client.loop_start()
         id = 0
-        cnt = 0
-        start_id, end_id = self.end_point_detection()
-        num_bin = len(start_id)
-        for bi in range(num_bin):
-            start_idx = int(start_id[bi])
-            end_idx = int(end_id[bi]) + 1
-            data = self._data_source.iloc[start_idx:end_idx, [1, 6, 7, 8, 19, 20, 21]].values
-            data = np.ascontiguousarray(data)
-            byte_data=data.tobytes()
-            base64_frame = (base64.b64encode(byte_data)).decode('utf-8')
-            decoded_data = np.frombuffer(base64.b64decode(base64_frame.encode('utf-8'))).reshape(data.shape)
-            task = ImuTask(base64_frame, id, self._id, self._priority, self.get_tuned_parameters())
-            self.send_task_to_mq(task)
-            print(f"Generated task {task.get_seq_id()} from source {task.get_source_id()}")
-            id += 1
-            temp_frame_buffer = []
-            time.sleep(5)
+        folder_path=self._data_source
+        for filename in os.listdir(folder_path):
+            if filename.endswith('.csv'):
+                file_path = os.path.join(folder_path, filename)
+                csv_data = pd.read_csv(file_path)
+                print(file_path)
+                start_id, end_id = self.end_point_detection(csv_data)
+                num_bin = len(start_id)
+                for bi in range(num_bin):
+                    start_idx = int(start_id[bi])
+                    end_idx = int(end_id[bi]) + 1
+                    data = csv_data.iloc[start_idx:end_idx, [1, 6, 7, 8, 19, 20, 21]].values
+                    data = np.ascontiguousarray(data)
+                    byte_data=data.tobytes()
+                    base64_frame = (base64.b64encode(byte_data)).decode('utf-8')
+                    decoded_data = np.frombuffer(base64.b64decode(base64_frame.encode('utf-8'))).reshape(data.shape)
+                    task = ImuTask(base64_frame, id, self._id, self._priority, self.get_tuned_parameters())
+                    self.send_task_to_mq(task)
+                    print(f"Generated task {task.get_seq_id()} from source {task.get_source_id()}")
+                    id += 1
+                    time.sleep(5)
 
-    def end_point_detection(self):
-        linear_acceleration = self._data_source.iloc[:, 19:22].values
-        angular_velocity = self._data_source.iloc[:, 6:9].values
-        timestamp = self._data_source.iloc[:, 1:2].values
+    def end_point_detection(self,csv_data):
+        linear_acceleration = csv_data.iloc[:, 19:22].values
+        angular_velocity = csv_data.iloc[:, 6:9].values
+        timestamp = csv_data.iloc[:, 1:2].values
         # transform unit
         # gyro : from deg to rad
         angular_velocity = angular_velocity / 180 * np.pi
@@ -175,6 +180,6 @@ if __name__ == '__main__':
     id = parser.parse_args().id
     # data_source = parser.parse_args().data_source
 
-    generator = ImuGenerator('/Users/wenyidai/GitHub/multi-task-ce-framework/imu/twosample.csv', f'generator_{id}',
+    generator = ImuGenerator(r'E:\College\NJU\videoStable\6-axis', f'generator_{id}',
                              'testapp/generator', 0, {})
     generator.run()

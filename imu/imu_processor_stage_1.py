@@ -7,8 +7,6 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 from framework.service.processor import Processor
 from framework.message_queue.mqtt import MqttSubscriber, MqttPublisher
 import json
-import logging
-import time
 import base64
 import numpy as np
 import threading
@@ -115,7 +113,7 @@ class ImuProcessor1(Processor):
         # 将NumPy数组转换为Python列表
         displace = displacement.tolist()
         json_data = json.dumps({"displacement": displace})
-        print(json_data)
+        # print(json_data)
         return json_data
 
     def getRelativeRotation(self, lpms_gyro, lpms_time, R):

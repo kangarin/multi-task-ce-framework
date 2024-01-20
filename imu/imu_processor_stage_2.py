@@ -9,12 +9,12 @@ from framework.message_queue.mqtt import MqttSubscriber, MqttPublisher
 import json
 import logging
 import time
+from mpl_toolkits.mplot3d import Axes3D
 import base64
 import numpy as np
 import threading
 from scipy.integrate import cumtrapz
 import matplotlib.pyplot as plt
-import numpy as np
 import io
 
 if __name__ == '__main__':
@@ -113,7 +113,9 @@ class ImuProcessor2(Processor):
                 buffer = io.BytesIO()
                 plt.savefig(buffer, format='png')
                 buffer.seek(0)
-                process_result=buffer
+                base64_encoded_image = base64.b64encode(buffer.getvalue()).decode('utf-8')
+                process_result=json.dumps({"pic":base64_encoded_image})
+                print(1)
                 processed_task = ImuTask(process_result, task.get_seq_id(), task.get_source_id(), self.get_priority())
                 self.send_task_to_outgoing_mq(processed_task)
 
