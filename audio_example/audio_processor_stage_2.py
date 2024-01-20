@@ -1,5 +1,6 @@
 # add base path to sys.path
-import os, sys
+import os
+import sys
 
 import librosa
 
@@ -9,11 +10,9 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 from framework.service.processor import Processor
 from framework.message_queue.mqtt import MqttSubscriber, MqttPublisher
 import json
-import logging
 import time
 import threading
 import base64
-import cv2
 import numpy as np
 import torch
 
@@ -22,7 +21,7 @@ if __name__ == '__main__':
 else:
     from .audio_task import AudioTask
 
-model_path = '/Users/wenyidai/GitHub/multi-task-ce-framework/audio_example/model.pth'
+model_path = 'model.pth'
 device = torch.device("cuda:0" if (torch.cuda.is_available()) else "cpu")
 model = torch.jit.load(model_path, map_location=device)
 model.to(device)
@@ -45,7 +44,7 @@ sound_categories = [
 class AudioProcessor2(Processor):
     def __init__(self, id: str, incoming_mq_topic: str, outgoing_mq_topic: str,
                  priority: int, tuned_parameters: dict,
-                 mqtt_host: str = 'localhost', mqtt_port: int = 1883, mqtt_username: str = 'admin',
+                 mqtt_host: str = '138.3.208.203', mqtt_port: int = 1883, mqtt_username: str = 'admin',
                  mqtt_password: str = 'admin'):
         super().__init__(id, incoming_mq_topic, outgoing_mq_topic, priority, tuned_parameters)
         mqtt_client_id = str(id)
@@ -114,13 +113,18 @@ class AudioProcessor2(Processor):
                 if mode == 1:
                     pass
                 elif mode == 2:
-                    index, time = self.infer(task_data, task.get_metadata()["framerate"])
+                    index, time = self.infer(task_data, task.get_metadata()["framerate"] if task.get_metadata()[
+                                                                                                "resample_rate"] == 0 else
+                    task.get_metadata()["resample_rate"])
+                    print("time: ", time)
                     # index = 4
                     task.get_metadata().update({"category": str(index) + '-' + sound_categories[index]})
 
                 processed_task = AudioTask(task.get_data(), task.get_seq_id(), task.get_source_id(),
                                            self.get_priority(),
-                                           task.get_metadata())
+                                           json.dumps(task.get_metadata()))
+                print(task.get_metadata())
+                # print(json.dumps(task.get_metadata()))
                 self.send_task_to_outgoing_mq(processed_task)
 
     def infer(self, data, framerate):
@@ -140,8 +144,9 @@ class AudioProcessor2(Processor):
         return lab, time2 - time1
 
     def load_data(self, data, framerate):
-        data = np.frombuffer(data, dtype=np.short)
-        spec_mag = librosa.feature.melspectrogram(y=data * 1.0, sr=framerate, hop_length=256).astype(np.float32)
+        data = np.frombuffer(data, dtype=np.short) / np.iinfo(np.short).max
+        data = librosa.resample(data, orig_sr=framerate, target_sr=16000)
+        spec_mag = librosa.feature.melspectrogram(y=data * 1.0, sr=16000, hop_length=256).astype(np.float32)
         mean = np.mean(spec_mag, 0, keepdims=True)
         std = np.std(spec_mag, 0, keepdims=True)
         spec_mag = (spec_mag - mean) / (std + 1e-5)
